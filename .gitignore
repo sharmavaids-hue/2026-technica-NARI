@@ -1,0 +1,18 @@
+# secrets
+.env
+.env*.local
+.env.local
+
+# dependencies and builds
+node_modules/
+.next/
+out/
+venv/
+__pycache__/
+
+# inspiration images (other artists' work, keep local only)
+design/inspo/
+
+# system files
+.DS_Store
+Thumbs.db
