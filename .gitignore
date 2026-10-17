@@ -16,3 +16,12 @@ design/inspo/
 # system files
 .DS_Store
 Thumbs.db
+
+# next.js / tooling
+/build
+/coverage
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+npm-debug.log*
+*.pem

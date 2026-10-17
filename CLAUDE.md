@@ -1,13 +1,13 @@
 # Nari: project summary for Claude Code
 
-Nari is a website for college women: know if your period is actually heavy, notice patterns, get taken seriously by a doctor. Hackathon project (Technica 2026). Full plan and milestones: **PLAN.md**. Product + design brief: **BRIEF.md**. Approved mockups: `design/*.png` (match them closely). `design/inspo/` is mood only, local only, never copy it.
+Nari is a website for college women: know if your period is actually heavy, notice patterns, get taken seriously by a doctor. Hackathon project (Technica 2026). Full plan and milestones: **PLAN.md**. Backend functions the UI calls: **BACKEND.md**. Product + design brief: **BRIEF.md**. Approved mockups: `design/*.png` (match them closely). `design/inspo/` is mood only, local only, never copy it.
 
 ## Stack
 Next.js (App Router, TypeScript) + Tailwind, Supabase (auth + Postgres, RLS), Gemini via `@google/genai` (server routes only, model ID in `GEMINI_MODEL`), Vercel (auto-deploys on push to main). Windows dev machines. Secrets live in `.env.local` (gitignored). Never call Gemini from the browser.
 
 ## Team and file ownership (never edit the other person's files; ask instead)
 - **Arshia (frontend/UI)**: `app/globals.css`, Tailwind tokens, `app/layout.tsx`, `app/page.tsx` (landing), `app/(app)/**/page.tsx`, auth page markup, `components/**` (ui, shell, home, pad, chat, settings, doctor, landing).
-- **Aryan (backend)**: `package.json` + all installs, `.env.local`, Vercel, `supabase/**`, `middleware.ts`, `lib/**` (types, actions, supabase, date, pbac, predict, schedule, signals, patterns, demo-seed, gcal), `app/api/**`, auth server actions.
+- **Aryan (backend)**: `package.json` + all installs, `.env.local`, Vercel, `supabase/**`, `proxy.ts` (Next 16's name for middleware), `lib/**` (types, actions, supabase, date, pbac, predict, schedule, signals, patterns, demo-seed, gcal), `app/api/**`, auth server actions.
 - Contract: components import only from `lib/types.ts` and `lib/actions/*`. Actions start as stubs returning fake data; Aryan swaps in real bodies.
 
 ## Core rules
