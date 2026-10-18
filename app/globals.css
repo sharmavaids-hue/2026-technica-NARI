@@ -218,6 +218,10 @@ dialog.sheet[open] {
 .grow-in { animation: grow-in 700ms var(--ease-out-soft) backwards; }
 .pop-in { animation: pop-in 420ms var(--ease-out-soft) both; }
 .chip-drop { animation: chip-drop 900ms var(--ease-out-soft) both; }
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(10px); }
+}
+.msg-in { animation: msg-in 320ms var(--ease-out-soft) backwards; }
 
 /* colored sections sweep in as a block of their own color */
 @keyframes wipe {

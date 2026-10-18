@@ -56,6 +56,8 @@ export function ChatView({ data }: { data: ChatData }) {
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
+  // messages already on screen when the page opened don't animate; new ones slide in
+  const [seen] = useState(() => new Set(data.messages.map((m) => m.id)));
   const rootRef = useRef<HTMLDivElement>(null);
 
   const messages = chat.messages;
@@ -156,7 +158,7 @@ export function ChatView({ data }: { data: ChatData }) {
                   {dayLabel(m.appDate, chat.today)} {time(m.createdAt)}
                 </p>
               )}
-              {renderMessage(m)}
+              {seen.has(m.id) ? renderMessage(m) : <div className="msg-in flex flex-col">{renderMessage(m)}</div>}
               {i === lastUser && !sending && (
                 <p className="-mt-1 self-end pr-1 text-sm text-muted">
                   {readBy ? `Read ${time(readBy.createdAt)}` : "Delivered"}
