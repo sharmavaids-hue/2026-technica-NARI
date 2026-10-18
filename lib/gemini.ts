@@ -16,7 +16,7 @@ const IMAGE_TIMEOUT_MS = 18_000; // photo guesses take ~8-9s on gemini-3.8-flash
 
 const PRIMARY = process.env.GEMINI_MODEL || "gemini-flash-latest";
 const FALLBACKS = (process.env.GEMINI_FALLBACK_MODELS ||
-  "gemini-flash-latest,gemini-flash-lite-latest,gemini-2.5-flash,gemini-2.5-flash-lite")
+  "gemini-3.5-flash,gemini-flash-latest,gemini-3.5-flash-lite,gemini-flash-lite-latest")
   .split(",")
   .map((m) => m.trim())
   .filter(Boolean);
@@ -31,7 +31,8 @@ function ai(): GoogleGenAI | null {
 
 // model -> time (ms) until we try it again. Lives as long as the server instance.
 const coolUntil = new Map<string, number>();
-const deadModels = new Set<string>(); // 404: wrong model ID, never retry
+const deadModels = new Set<string>(); // 404: wrong/retired model ID, never retry
+const lastErrorByModel = new Map<string, string>(); // for /api/health
 
 export type GeminiFail = Exclude<PadFailReason, "not-a-pad">;
 
@@ -97,6 +98,7 @@ async function askJson(
         });
         return (lastResult = { ok: false, data: null, model, reason: "blocked", error: `blocked (${blocked ?? finish ?? "empty"})` });
       }
+      lastErrorByModel.delete(model);
       return (lastResult = { ok: true, data: JSON.parse(res.text), model, reason: null, error: null });
     } catch (err) {
       const e = err as Error;
@@ -106,9 +108,10 @@ async function askJson(
       }
       lastErr = (e.message ?? String(err)).slice(0, 500);
       const kind = classify(lastErr);
+      lastErrorByModel.set(model, `${kind}: ${(lastErr.match(/"message":"([^"]{0,160})/)?.[1] ?? lastErr).slice(0, 160)}`);
       console.warn(`[gemini:${label}] ${model} failed (${kind}): ${lastErr.slice(0, 200)}`);
       if (kind === "dead") deadModels.add(model);
-      else if (kind === "quota") { coolUntil.set(model, Date.now() + 10 * 60_000); sawBusy = true; }
+      else if (kind === "quota") { coolUntil.set(model, Date.now() + 2 * 60_000); sawBusy = true; }
       else if (kind === "busy") { coolUntil.set(model, Date.now() + 60_000); sawBusy = true; }
       else return (lastResult = { ok: false, data: null, model, reason: "error", error: lastErr });
     } finally {
@@ -133,6 +136,8 @@ export async function geminiSelfTest() {
     error: r.error,
     tried: MODELS,
     coolingDown: [...coolUntil.entries()].filter(([, t]) => t > Date.now()).map(([m]) => m),
+    retired: [...deadModels],
+    errors: Object.fromEntries(lastErrorByModel),
   };
 }
 
