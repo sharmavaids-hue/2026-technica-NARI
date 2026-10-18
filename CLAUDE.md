@@ -22,7 +22,7 @@ Next.js (App Router, TypeScript) + Tailwind, Supabase (auth + Postgres, RLS), Ge
 ## Design
 - Concept: editorial poster. Huge royal-blue Instrument Serif on warm paper, one glossy watermelon-red sphere (the dot in "nari.", period days, chat avatar, score that fills to 100). Subtle paper grain, halftone on colored cards, arch cards, pill buttons. Bold type + sphere, everything else calm.
 - Fonts: Instrument Serif (display, italic for emphasis), Atkinson Hyperlegible (body/UI).
-- Colors: paper #F5F0E8, card #FBF8F2, border #DCD3C4, royal blue #26368E, watermelon #B83E4B, peach #F7DCAD, mustard #736428, morning blue #93A29D (darken for mood bar fill to ≥3:1), ink #1F2340, muted #5E5A66. Light mode only.
+- Colors: use the tokens in `app/globals.css` (`@theme`); never raw hex in components. Light mode only.
 - Bars: bleeding red, energy mustard, discomfort blue, mood morning blue; always label + number.
 - States always icon + words: looks typical / keep an eye on it / worth a doctor chat / get help now (ink card).
 
