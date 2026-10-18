@@ -444,6 +444,18 @@ dialog.sheet[open] {
 }
 .pop-note { animation: pop-note 2600ms var(--ease-out-soft) forwards; }
 
+/* color me calm: fills ease in, focused region gets a blue outline */
+.color-region {
+  transition: fill 380ms var(--ease-out-soft);
+}
+.color-region:hover {
+  stroke-width: 2.6;
+}
+.color-region:focus-visible {
+  stroke: var(--color-blue);
+  stroke-width: 3.5;
+}
+
 @keyframes cover-turn {
   from { opacity: 0; transform: perspective(900px) rotateX(-10deg) translateY(-8px); }
 }

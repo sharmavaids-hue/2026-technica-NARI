@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { BubblesCover } from "./BubblesCover";
+import { ColorCover } from "./ColorCover";
 import { SwimCover } from "./SwimCover";
 
 // one calm note per month, in nari's voice
@@ -36,8 +37,8 @@ export function MonthCover({ month }: { month: string }) {
 
   return (
     <div data-kind={kind} className="cover-turn relative mb-4 overflow-hidden rounded-[22px] border border-line">
-      <div className="relative h-[150px] sm:h-[210px]">
-        {kind === "bubbles" ? <BubblesCover month={month} /> : <SwimCover month={month} />}
+      <div className={`relative sm:h-[210px] ${kind === "color" ? "h-[214px]" : "h-[150px]"}`}>
+        {kind === "bubbles" ? <BubblesCover month={month} /> : kind === "color" ? <ColorCover month={month} /> : <SwimCover month={month} />}
 
         {/* paper label: handwritten month + typewriter date, like a journal page */}
         <div aria-hidden="true" className="pointer-events-none absolute bottom-2.5 left-3 rotate-[-2deg] rounded-[6px] bg-card/90 px-3 pb-1.5 pt-0.5 shadow-[0_2px_0_rgb(31_35_64/0.06)] sm:bottom-4 sm:left-5">
@@ -48,7 +49,7 @@ export function MonthCover({ month }: { month: string }) {
         </div>
 
         {/* the month's note */}
-        <p aria-hidden="true" className="pointer-events-none absolute right-3 top-2.5 max-w-[11rem] text-right font-type text-[0.72rem] leading-snug text-ink/75 sm:right-5 sm:top-4 sm:max-w-[14rem] sm:text-[0.8rem]">
+        <p aria-hidden="true" className={`pointer-events-none absolute right-3 top-2.5 max-w-[11rem] ${kind === "color" ? "hidden sm:block" : ""} text-right font-type text-[0.72rem] leading-snug text-ink/75 sm:right-5 sm:top-4 sm:max-w-[14rem] sm:text-[0.8rem]`}>
           {QUOTES[m - 1]}
         </p>
       </div>
