@@ -2,15 +2,22 @@
 
 import { useState } from "react";
 import { formatMonthDay } from "@/lib/date";
-import type { DoctorData } from "@/lib/types";
+import type { DoctorData, PadLog } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PatternNote, SignalCard } from "@/components/ui/SignalCard";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { PrintIcon } from "@/components/ui/icons";
 import { ScoreExplainer } from "@/components/ui/ScoreExplainer";
+import { PadList } from "@/components/ui/PadRecord";
 
 const cell = (v: number | null) => (v === null ? "–" : `${v}/5`);
+/** "1 small, 1 large" */
+function clots(pads: PadLog[]) {
+  const small = pads.filter((p) => p.clot === "small").length;
+  const large = pads.filter((p) => p.clot === "large").length;
+  return [small && `${small} small`, large && `${large} large`].filter(Boolean).join(", ") || "–";
+}
 
 export function DoctorView({ data }: { data: DoctorData }) {
   const [status, setStatus] = useState("");
@@ -130,16 +137,34 @@ export function DoctorView({ data }: { data: DoctorData }) {
               </ul>
             </section>
 
+            <section aria-labelledby="record-title" className="msg-in flex flex-col gap-3 print:break-inside-avoid" style={{ animationDelay: "380ms" }}>
+              <h3 id="record-title" className="font-bold text-lg">
+                pad record
+              </h3>
+              <div className="grid gap-x-8 gap-y-4 text-[0.95rem] sm:grid-cols-2">
+                {data.days
+                  .filter((d) => d.pads.length)
+                  .map((d) => (
+                    <div key={d.date}>
+                      <p className="mb-1.5 font-bold">
+                        day {d.periodDay} <span className="font-normal text-muted">· {formatMonthDay(d.date)}</span>
+                      </p>
+                      <PadList pads={d.pads} label={`pads on ${formatMonthDay(d.date)}`} />
+                    </div>
+                  ))}
+              </div>
+            </section>
+
             <section aria-labelledby="table-title" className="msg-in flex flex-col gap-3 print:break-inside-avoid" style={{ animationDelay: "440ms" }}>
               <h3 id="table-title" className="font-bold text-lg">
                 daily check-ins
               </h3>
               <div className="overflow-x-auto rounded-inner border border-line">
-                <table className="w-full min-w-[34rem] border-collapse text-left tabular-nums">
+                <table className="w-full min-w-[38rem] border-collapse text-left tabular-nums">
                   <caption className="sr-only">daily check-ins for this period, each rated out of 5</caption>
                   <thead className="bg-paper">
                     <tr>
-                      {["day", "date", "pads", "points", "bleeding", "energy", "discomfort", "mood"].map((h) => (
+                      {["day", "date", "pads", "clots", "points", "bleeding", "energy", "discomfort", "mood"].map((h) => (
                         <th key={h} scope="col" className="px-3 py-2.5 text-sm font-bold">
                           {h}
                         </th>
@@ -154,6 +179,7 @@ export function DoctorView({ data }: { data: DoctorData }) {
                         </th>
                         <td className="px-3 py-2.5">{formatMonthDay(d.date)}</td>
                         <td className="px-3 py-2.5">{d.pads.length}</td>
+                        <td className="px-3 py-2.5">{clots(d.pads)}</td>
                         <td className="px-3 py-2.5">{d.padPoints}</td>
                         <td className="px-3 py-2.5">{cell(d.bleeding)}</td>
                         <td className="px-3 py-2.5">{cell(d.energy)}</td>

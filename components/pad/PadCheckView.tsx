@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { guessPad, savePad } from "@/lib/actions/pad";
 import { CLOT_POINTS, LEAK_POINTS, SOAK_POINTS, padPoints, scoreOf } from "@/lib/pbac";
-import type { Clot, PadCheckData, PadFailReason, Score, Signal, Soak } from "@/lib/types";
+import type { Clot, PadCheckData, PadFailReason, PadLog, Score, Signal, Soak } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { GetHelpContent } from "@/components/ui/GetHelp";
@@ -12,6 +12,7 @@ import { SignalCard } from "@/components/ui/SignalCard";
 import { ScoreSphere } from "@/components/ui/Sphere";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { CheckIcon } from "@/components/ui/icons";
+import { PadList } from "@/components/ui/PadRecord";
 import { ScoreExplainer } from "@/components/ui/ScoreExplainer";
 import { scoreProgress } from "@/components/ui/scoreProgress";
 import { PhotoBox, type PhotoStatus } from "./PhotoBox";
@@ -50,6 +51,7 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
   const [ai, setAi] = useState<{ soak: Soak | null; clot: Clot | null }>({ soak: null, clot: null });
   const [score, setScore] = useState<Score>(data.score);
   const [signals, setSignals] = useState<Signal[]>(data.signals);
+  const [todayPads, setTodayPads] = useState<PadLog[]>(data.todayPads);
   const [saved, setSaved] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
   const [drop, setDrop] = useState<{ key: number; pts: number } | null>(null);
@@ -121,6 +123,7 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
       setDrop({ key: Date.now(), pts: res.added });
       setScore(res.score);
       setSignals(res.signals);
+      if (res.pad.date === data.today) setTodayPads((pads) => [...pads, res.pad]);
       setSaved(`saved. +${pts(res.added)}. this period's score is now ${res.score.value}.`);
       setSoak(null);
       setClot("none");
@@ -282,6 +285,22 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
             <p className="text-sm text-muted">
               scored with the PBAC chart (Higham, 1990). 100+ in one period suggests heavy bleeding.
             </p>
+          </section>
+
+          <section aria-labelledby="today-pads" className="rounded-card border border-line bg-card p-5">
+            <h2 id="today-pads" className="font-serif text-[1.7rem] leading-none text-blue">
+              today&apos;s pads
+            </h2>
+            {todayPads.length ? (
+              <>
+                <p className="mb-3 mt-1 text-sm text-muted">
+                  {todayPads.length} pad{todayPads.length === 1 ? "" : "s"} · {todayPads.reduce((n, p) => n + p.points, 0)} pts today
+                </p>
+                <PadList pads={todayPads} label="today's pads" className="text-[0.95rem]" />
+              </>
+            ) : (
+              <p className="mt-2 text-muted">nothing logged yet today. your first pad shows up here.</p>
+            )}
           </section>
 
           <button

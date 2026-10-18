@@ -6,6 +6,7 @@ import { saveDay } from "@/lib/actions/home";
 import { formatShort } from "@/lib/date";
 import type { Day, ISODate, Rating } from "@/lib/types";
 import { DayBars } from "@/components/ui/Bars";
+import { PadList } from "@/components/ui/PadRecord";
 import { Button } from "@/components/ui/Button";
 import { Tag } from "@/components/ui/Chip";
 import { RatingPicker } from "@/components/ui/RatingPicker";
@@ -61,6 +62,11 @@ export function DayPanel({ day, today, variant = "panel" }: DayPanelProps) {
             <p className="rounded-inner bg-card/70 p-4 text-muted">
               {day.date > today ? "this day hasn't happened yet." : "no check-in for this day yet."}
             </p>
+          )}
+          {day.pads.length > 0 && (
+            <div className="rounded-inner bg-card p-4 text-[0.95rem] sm:px-5">
+              <PadList pads={day.pads} label={`pads logged on ${formatShort(day.date)}`} />
+            </div>
           )}
           {day.activities.length > 0 && (
             <ul aria-label="activities" className="flex flex-wrap gap-2">
