@@ -6,6 +6,7 @@ import { addDays, weekdayMon0 } from "@/lib/date";
 import type { Day, ISODate } from "@/lib/types";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "@/components/ui/icons";
+import { MonthCover, setCoverHidden, useCoverHidden } from "./covers/MonthCover";
 
 const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const WEEKDAYS_LONG = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
@@ -39,6 +40,7 @@ export function Calendar({ days, today, selected, onSelect, nextPeriodLabel, gca
   const [month, setMonth] = useState(monthOf(selected));
   const [focused, setFocused] = useState<ISODate>(selected);
   const [editing, setEditing] = useState(false);
+  const coverHidden = useCoverHidden();
   const [status, setStatus] = useState("");
   const [pendingDate, setPendingDate] = useState<ISODate | null>(null);
   const [, startTransition] = useTransition();
@@ -101,6 +103,7 @@ export function Calendar({ days, today, selected, onSelect, nextPeriodLabel, gca
 
   return (
     <section aria-labelledby="cal-month" className="rounded-card border border-line bg-card p-4 sm:p-6">
+      {!coverHidden && <MonthCover key={month} month={month} />}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 sm:gap-3">
           <button
@@ -112,7 +115,11 @@ export function Calendar({ days, today, selected, onSelect, nextPeriodLabel, gca
           >
             <ChevronLeftIcon size={18} />
           </button>
-          <h2 id="cal-month" aria-live="polite" className="min-w-[6.5ch] text-center font-serif text-[2.1rem] leading-none text-blue sm:text-[2.5rem]">
+          <h2
+            id="cal-month"
+            aria-live="polite"
+            className={coverHidden ? "min-w-[6.5ch] text-center font-serif text-[2.1rem] leading-none text-blue sm:text-[2.5rem]" : "sr-only"}
+          >
             {monthName(month)}
           </h2>
           <button
@@ -125,6 +132,14 @@ export function Calendar({ days, today, selected, onSelect, nextPeriodLabel, gca
             <ChevronRightIcon size={18} />
           </button>
         </div>
+        <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setCoverHidden(!coverHidden)}
+          className="min-h-11 px-1 text-sm font-bold text-blue underline underline-offset-4"
+        >
+          {coverHidden ? "show cover" : "hide cover"}
+        </button>
         <Button
           variant={editing ? "solid-blue" : "outline"}
           aria-pressed={editing}
@@ -135,6 +150,7 @@ export function Calendar({ days, today, selected, onSelect, nextPeriodLabel, gca
         >
           {editing ? "done" : "edit period days"}
         </Button>
+        </div>
       </div>
 
       {editing && (

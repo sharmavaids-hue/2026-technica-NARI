@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible, Instrument_Serif } from "next/font/google";
+import { Atkinson_Hyperlegible, Caveat, Instrument_Serif, Special_Elite } from "next/font/google";
 import "./globals.css";
 
 const instrumentSerif = Instrument_Serif({
@@ -15,6 +15,10 @@ const atkinson = Atkinson_Hyperlegible({
   weight: ["400", "700"],
   style: ["normal", "italic"],
 });
+
+// calendar month covers only: handwritten month names + tiny typewriter notes
+const caveat = Caveat({ variable: "--font-caveat", subsets: ["latin"], weight: ["500", "700"] });
+const specialElite = Special_Elite({ variable: "--font-special-elite", subsets: ["latin"], weight: "400" });
 
 export const metadata: Metadata = {
   title: "nari. know your flow",
@@ -33,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${instrumentSerif.variable} ${atkinson.variable} h-full antialiased`}
+      className={`${instrumentSerif.variable} ${atkinson.variable} ${caveat.variable} ${specialElite.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}

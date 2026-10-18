@@ -17,6 +17,8 @@
   --color-blush: #e3c4c2;
   --color-ink: #1f2340;
   --color-muted: #5e5a66;
+  --color-water: #f6d9dc;
+  --color-water-deep: #f2c9ce;
 
   --radius-pill: 999px;
   --radius-card: 28px;
@@ -28,6 +30,8 @@
 @theme inline {
   --font-serif: var(--font-instrument-serif), Georgia, serif;
   --font-sans: var(--font-atkinson), system-ui, sans-serif;
+  --font-hand: var(--font-caveat), cursive;
+  --font-type: var(--font-special-elite), ui-monospace, monospace;
 }
 
 /* ---------- base ---------- */
@@ -197,6 +201,21 @@ dialog.sheet[open] {
     }
   }
 }
+
+/* ---------- calendar month covers ---------- */
+.swim-cover {
+  container-type: size;
+  cursor: crosshair;
+}
+@keyframes swim-ripple {
+  from { opacity: 0.9; transform: translate(-50%, -50%) scale(0.6); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(3.2); }
+}
+.swim-ripple { animation: swim-ripple 1600ms var(--ease-out-soft) forwards; }
+@keyframes cover-turn {
+  from { opacity: 0; transform: perspective(900px) rotateX(-10deg) translateY(-8px); }
+}
+.cover-turn { transform-origin: top center; animation: cover-turn 420ms var(--ease-out-soft) backwards; }
 
 /* ---------- small explanatory motion (all off with reduced motion via the rule below) ---------- */
 @keyframes fill-in {
