@@ -1,4 +1,5 @@
 import { Hero } from "@/components/landing/Hero";
+import { ScoreStory } from "@/components/landing/ScoreStory";
 import { HabitsSection, HeavySection, LandingFooter, TrustSection } from "@/components/landing/Sections";
 
 export default function Home() {
@@ -7,6 +8,7 @@ export default function Home() {
       <main>
         <Hero />
         <HeavySection />
+        <ScoreStory />
         <HabitsSection />
         <TrustSection />
       </main>

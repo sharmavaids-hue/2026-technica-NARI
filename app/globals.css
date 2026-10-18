@@ -198,6 +198,144 @@ dialog.sheet[open] {
   }
 }
 
+/* ---------- landing: "how your score adds up" scroll story ---------- */
+/* finished state by default: full pad, sphere at 26, every step lit */
+@property --story-n {
+  syntax: "<integer>";
+  inherits: true;
+  initial-value: 26;
+}
+.story-count::after {
+  counter-reset: story var(--story-n);
+  content: counter(story);
+}
+.story-stain-1,
+.story-stain-2 {
+  opacity: 0;
+}
+.story-chip {
+  opacity: 0;
+}
+.story-liquid {
+  transform: scaleY(0.26);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .story {
+      height: 320vh;
+      view-timeline-name: --story;
+    }
+    .story-sticky {
+      position: sticky;
+      top: 0;
+      min-height: 100dvh;
+    }
+    .story-count,
+    .story-stain,
+    .story-chip,
+    .story-liquid,
+    .story-step {
+      animation-timeline: --story;
+      animation-range: contain 0% contain 100%;
+      animation-fill-mode: both;
+      animation-timing-function: linear;
+    }
+    .story-count {
+      animation-name: story-n;
+    }
+    .story-liquid {
+      animation-name: story-liquid;
+    }
+    .story-stain-1 {
+      animation-name: story-stain-1;
+    }
+    .story-stain-2 {
+      animation-name: story-stain-2;
+    }
+    .story-stain-3 {
+      animation-name: story-stain-3;
+    }
+    .story-chip-1 {
+      animation-name: story-chip-1;
+    }
+    .story-chip-2 {
+      animation-name: story-chip-2;
+    }
+    .story-chip-3 {
+      animation-name: story-chip-3;
+    }
+    .story-step-1 {
+      animation-name: story-step-1;
+    }
+    .story-step-2 {
+      animation-name: story-step-2;
+    }
+    .story-step-3 {
+      animation-name: story-step-3;
+    }
+  }
+}
+
+/* three beats: light (5–30%), moderate (37–62%), full (69–94%) */
+@keyframes story-n {
+  0%, 22% { --story-n: 0; }
+  30%, 54% { --story-n: 1; }
+  62%, 86% { --story-n: 6; }
+  94%, 100% { --story-n: 26; }
+}
+@keyframes story-liquid {
+  0%, 22% { transform: scaleY(0); }
+  30%, 54% { transform: scaleY(0.04); }
+  62%, 86% { transform: scaleY(0.09); }
+  94%, 100% { transform: scaleY(0.26); }
+}
+@keyframes story-stain-1 {
+  0%, 4% { opacity: 0; }
+  10%, 36% { opacity: 1; }
+  40%, 100% { opacity: 0; }
+}
+@keyframes story-stain-2 {
+  0%, 36% { opacity: 0; }
+  42%, 68% { opacity: 1; }
+  72%, 100% { opacity: 0; }
+}
+@keyframes story-stain-3 {
+  0%, 68% { opacity: 0; }
+  74%, 100% { opacity: 1; }
+}
+/* chips start above the pad and drop into the sphere */
+@keyframes story-chip-1 {
+  0%, 12% { opacity: 0; transform: translate(0, 0); }
+  15% { opacity: 1; transform: translate(0, 0); }
+  28% { opacity: 1; transform: translate(12.5rem, 7rem) scale(0.7); }
+  31%, 100% { opacity: 0; transform: translate(12.5rem, 7rem) scale(0.7); }
+}
+@keyframes story-chip-2 {
+  0%, 44% { opacity: 0; transform: translate(0, 0); }
+  47% { opacity: 1; transform: translate(0, 0); }
+  60% { opacity: 1; transform: translate(12.5rem, 7rem) scale(0.7); }
+  63%, 100% { opacity: 0; transform: translate(12.5rem, 7rem) scale(0.7); }
+}
+@keyframes story-chip-3 {
+  0%, 76% { opacity: 0; transform: translate(0, 0); }
+  79% { opacity: 1; transform: translate(0, 0); }
+  92% { opacity: 1; transform: translate(12.5rem, 7rem) scale(0.7); }
+  95%, 100% { opacity: 0; transform: translate(12.5rem, 7rem) scale(0.7); }
+}
+@keyframes story-step-1 {
+  0%, 8% { opacity: 0.65; }
+  14%, 100% { opacity: 1; }
+}
+@keyframes story-step-2 {
+  0%, 40% { opacity: 0.65; }
+  46%, 100% { opacity: 1; }
+}
+@keyframes story-step-3 {
+  0%, 72% { opacity: 0.65; }
+  78%, 100% { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
