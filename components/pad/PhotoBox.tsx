@@ -1,8 +1,8 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState, type ChangeEvent, type ReactNode } from "react";
 import type { PadFailReason } from "@/lib/types";
-import { CameraIcon } from "@/components/ui/icons";
+import { CameraIcon, GalleryIcon } from "@/components/ui/icons";
 import { buttonClass } from "@/components/ui/Button";
 
 export type PhotoStatus = "idle" | "looking" | "guessed" | "no-guess" | "bad-format";
@@ -38,35 +38,53 @@ type PhotoBoxProps = {
 
 /** Optional pad photo: blurred until she chooses to look. Never stored. */
 export function PhotoBox({ url, onPick, onClear, status, reason }: PhotoBoxProps) {
-  const id = useId();
   // remembers which photo was revealed, so a new photo always starts blurred again
   const [revealedUrl, setRevealedUrl] = useState<string | null>(null);
   const revealed = url !== null && revealedUrl === url;
   const setRevealed = (on: boolean) => setRevealedUrl(on ? url : null);
 
-  const picker = (
-    <input
-      id={id}
-      type="file"
-      accept="image/*"
-      capture="environment"
-      className="sr-only"
-      onChange={(e) => {
-        const f = e.target.files?.[0];
-        if (f) onPick(f);
-        e.target.value = "";
-      }}
-    />
+  // two inputs: "capture" opens the camera straight away on phones; without it phones offer the gallery.
+  // iPhone gallery photos (HEIC) come through as JPEG from Safari's picker; resize.ts re-encodes everything to JPEG.
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) onPick(f);
+    e.target.value = "";
+  };
+  const ring = "has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-blue";
+  const pick = (camera: boolean, className: string, children: ReactNode) => (
+    <label className={`${className} ${ring}`}>
+      <input
+        type="file"
+        accept="image/*"
+        {...(camera ? { capture: "environment" as const } : {})}
+        className="sr-only"
+        onChange={onChange}
+      />
+      {children}
+    </label>
   );
 
   if (!url) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-inner border-[1.5px] border-dashed border-line bg-paper/60 px-5 py-8 text-center">
-        {picker}
-        <label htmlFor={id} className={buttonClass("solid-blue", "md")}>
-          <CameraIcon size={18} />
-          snap or upload a photo
-        </label>
+        <div className="flex flex-wrap justify-center gap-3">
+          {pick(
+            true,
+            buttonClass("solid-blue", "md"),
+            <>
+              <CameraIcon size={18} />
+              take a photo
+            </>,
+          )}
+          {pick(
+            false,
+            buttonClass("outline-blue", "md"),
+            <>
+              <GalleryIcon size={18} />
+              choose from gallery
+            </>,
+          )}
+        </div>
         <p className="max-w-sm text-[0.95rem] text-muted">
           optional. nari takes a quick look to suggest a soak level, then forgets it. photos are never saved.
         </p>
@@ -112,10 +130,8 @@ export function PhotoBox({ url, onPick, onClear, status, reason }: PhotoBoxProps
             blur it again
           </button>
         )}
-        {picker}
-        <label htmlFor={id} className="inline-flex min-h-11 items-center font-bold text-blue underline underline-offset-4">
-          retake
-        </label>
+        {pick(true, "inline-flex min-h-11 items-center rounded-md font-bold text-blue underline underline-offset-4", "retake")}
+        {pick(false, "inline-flex min-h-11 items-center rounded-md font-bold text-blue underline underline-offset-4", "pick another")}
         <button type="button" onClick={onClear} className="min-h-11 font-bold text-blue underline underline-offset-4">
           remove photo
         </button>

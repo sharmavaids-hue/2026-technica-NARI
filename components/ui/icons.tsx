@@ -65,6 +65,14 @@ export const CheckIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const GalleryIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+    <circle cx="9" cy="10" r="1.8" />
+    <path d="M4 17.5l5-5 4 4 2.5-2.5 5 5" />
+  </Icon>
+);
+
 export const EyeIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
