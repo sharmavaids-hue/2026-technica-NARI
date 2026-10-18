@@ -152,7 +152,7 @@ export function TrustSection() {
 
 export function LandingFooter() {
   return (
-    <footer className="wipe on-dark overflow-hidden bg-blue px-5 pb-8 pt-16 text-white sm:px-10 sm:pt-24">
+    <footer className="wipe on-dark relative overflow-hidden bg-blue px-5 pb-8 pt-16 text-white sm:px-10 sm:pt-24">
       <div className="mx-auto flex max-w-[1240px] flex-col gap-10">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <p className="font-serif text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.02]">
@@ -164,7 +164,7 @@ export function LandingFooter() {
             open nari
           </ButtonLink>
         </div>
-        <p aria-hidden="true" className="flex items-end font-serif text-[clamp(8rem,34vw,30rem)] leading-[0.8] tracking-[-0.03em]">
+        <p aria-hidden="true" className="relative z-10 flex items-end font-serif text-[clamp(8rem,34vw,30rem)] leading-[0.8] tracking-[-0.03em]">
           nari
           <span className="mb-[0.06em] ml-[0.02em] inline-block w-[0.2em]">
             <span className="sphere block aspect-square w-full" style={{ ["--s" as string]: "6rem" }} />

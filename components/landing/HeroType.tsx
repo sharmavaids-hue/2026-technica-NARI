@@ -116,7 +116,7 @@ export function HeroType() {
   );
 
   return (
-    <div ref={root} aria-hidden="true" className="relative -mx-4 select-none font-serif text-blue sm:-mx-10">
+    <div ref={root} aria-hidden="true" className="relative z-10 -mx-4 select-none font-serif text-blue sm:-mx-10">
       {line(
         "whitespace-nowrap text-center text-[19.4vw] leading-[0.82] tracking-[-0.035em]",
         0,
