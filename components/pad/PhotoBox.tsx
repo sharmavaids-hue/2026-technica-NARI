@@ -4,12 +4,22 @@ import { useId, useState } from "react";
 import { CameraIcon } from "@/components/ui/icons";
 import { buttonClass } from "@/components/ui/Button";
 
+export type PhotoStatus = "idle" | "looking" | "guessed" | "no-guess" | "bad-format";
+
+const MESSAGES: Record<PhotoStatus, string> = {
+  idle: "",
+  looking: "nari's looking…",
+  guessed: "nari made a guess below. change it if it's off.",
+  "no-guess": "i couldn't read that photo. pick it yourself below.",
+  "bad-format": "that photo didn't open here. try a jpg or png, or pick it yourself below.",
+};
+
 type PhotoBoxProps = {
   /** object URL of the chosen photo, or null */
   url: string | null;
   onPick: (file: File) => void;
   onClear: () => void;
-  status: "idle" | "looking" | "guessed" | "no-guess";
+  status: PhotoStatus;
 };
 
 /** Optional pad photo: blurred until she chooses to look. Never stored. */
@@ -73,10 +83,15 @@ export function PhotoBox({ url, onPick, onClear, status }: PhotoBoxProps) {
         )}
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <p role="status" className="mr-auto text-[0.95rem]">
-          {status === "looking" && "nari is taking a look…"}
-          {status === "guessed" && "nari made a guess. change it if it's off."}
-          {status === "no-guess" && "nari couldn't tell this time. pick what looks right."}
+        <p role="status" aria-busy={status === "looking"} className={`mr-auto flex items-center gap-2 text-[0.95rem] ${status === "guessed" ? "font-bold text-blue" : ""}`}>
+          {status === "looking" && (
+            <span aria-hidden="true" className="inline-flex gap-1">
+              {[0, 1, 2].map((d) => (
+                <span key={d} className="size-1.5 rounded-full bg-blue" style={{ animation: "typing 1.2s infinite", animationDelay: `${d * 0.15}s` }} />
+              ))}
+            </span>
+          )}
+          {MESSAGES[status]}
         </p>
         {revealed && (
           <button type="button" onClick={() => setRevealed(false)} className="min-h-11 font-bold text-blue underline underline-offset-4">

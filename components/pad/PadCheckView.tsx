@@ -12,7 +12,7 @@ import { SignalCard } from "@/components/ui/SignalCard";
 import { ScoreSphere } from "@/components/ui/Sphere";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { CheckIcon } from "@/components/ui/icons";
-import { PhotoBox } from "./PhotoBox";
+import { PhotoBox, type PhotoStatus } from "./PhotoBox";
 import { resizePhoto } from "./resize";
 import { useCountUp } from "./useCountUp";
 
@@ -43,7 +43,7 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
   const [clot, setClot] = useState<Clot>("none");
   const [leaked, setLeaked] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [photoStatus, setPhotoStatus] = useState<"idle" | "looking" | "guessed" | "no-guess">("idle");
+  const [photoStatus, setPhotoStatus] = useState<PhotoStatus>("idle");
   const [ai, setAi] = useState<{ soak: Soak | null; clot: Clot | null }>({ soak: null, clot: null });
   const [score, setScore] = useState<Score>(data.score);
   const [signals, setSignals] = useState<Signal[]>(data.signals);
@@ -66,11 +66,24 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
   async function pickPhoto(file: File) {
     setPhotoUrl(URL.createObjectURL(file));
     setSaved("");
+    setAi({ soak: null, clot: null });
     setPhotoStatus("looking");
     const run = ++guessRun.current;
+
+    // 1) shrink it in the browser. Some formats (e.g. HEIC on desktop Chrome) can't be opened here.
+    let jpeg: Blob;
+    try {
+      jpeg = await resizePhoto(file);
+    } catch (err) {
+      console.warn("[pad check] couldn't open this photo in the browser:", file.type || "unknown type", err);
+      if (run === guessRun.current) setPhotoStatus("bad-format");
+      return;
+    }
+
+    // 2) ask for a guess. Any failure falls back to picking by hand.
     try {
       const form = new FormData();
-      form.append("photo", await resizePhoto(file), "pad.jpg");
+      form.append("photo", jpeg, "pad.jpg");
       const guess = await guessPad(form);
       if (run !== guessRun.current) return; // a newer photo replaced this one
       if (guess.ok && guess.soak) {
@@ -79,10 +92,11 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
         if (guess.clot) setClot(guess.clot);
         setPhotoStatus("guessed");
       } else {
-        setAi({ soak: null, clot: null });
+        console.warn("[pad check] no guess from the server", guess, `(sent ${Math.round(jpeg.size / 1024)} KB jpeg)`);
         setPhotoStatus("no-guess");
       }
-    } catch {
+    } catch (err) {
+      console.warn("[pad check] guessPad failed:", err);
       if (run === guessRun.current) setPhotoStatus("no-guess");
     }
   }
