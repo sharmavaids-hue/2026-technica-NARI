@@ -12,6 +12,8 @@ import { SignalCard } from "@/components/ui/SignalCard";
 import { ScoreSphere } from "@/components/ui/Sphere";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { CheckIcon } from "@/components/ui/icons";
+import { ScoreExplainer } from "@/components/ui/ScoreExplainer";
+import { scoreProgress } from "@/components/ui/scoreProgress";
 import { PhotoBox, type PhotoStatus } from "./PhotoBox";
 import { resizePhoto } from "./resize";
 import { useCountUp } from "./useCountUp";
@@ -233,8 +235,9 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
         <div className="flex flex-col gap-5">
           <section aria-labelledby="score-title" className="flex flex-col items-center gap-2 rounded-card border border-line bg-card px-5 pb-6 pt-6 text-center">
             <ScoreSphere size={176} fill={shownScore.fill} />
-            <h2 id="score-title" className="mt-3 text-muted">
+            <h2 id="score-title" className="mt-3 flex items-center gap-3 text-muted">
               this period&apos;s score
+              <ScoreExplainer score={shownScore} className="-my-3 text-sm" />
             </h2>
             <p className="font-serif text-[4.2rem] leading-[0.9] text-blue">
               <span className="tabular-nums">{shown}</span>
@@ -243,6 +246,7 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
                 <span aria-hidden="true">/ </span>100
               </span>
             </p>
+            <p className="text-sm text-muted">{scoreProgress(shown)}</p>
             <p className="min-h-6 font-bold text-red" aria-live="polite">
               {soak ? `+${pts(adding)} with this pad` : ""}
             </p>

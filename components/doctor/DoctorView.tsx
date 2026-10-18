@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { PatternNote, SignalCard } from "@/components/ui/SignalCard";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { PrintIcon } from "@/components/ui/icons";
+import { ScoreExplainer } from "@/components/ui/ScoreExplainer";
 
 const cell = (v: number | null) => (v === null ? "–" : `${v}/5`);
 
@@ -69,7 +70,10 @@ export function DoctorView({ data }: { data: DoctorData }) {
           <>
             <dl className="grid gap-5 sm:grid-cols-3">
               <div className="flex flex-col gap-1.5">
-                <dt className="text-muted">PBAC score</dt>
+                <dt className="flex items-center gap-3 text-muted">
+                  PBAC score
+                  <ScoreExplainer score={data.score} className="-my-3 text-sm" />
+                </dt>
                 <dd className="font-serif text-6xl leading-none text-red">{data.score.value}</dd>
                 <dd>
                   <StatusPill state={data.score.state} label={data.score.label} className="text-sm" />
