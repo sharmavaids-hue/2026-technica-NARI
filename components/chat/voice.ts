@@ -44,6 +44,8 @@ export function stop() {
   request?.abort();
   request = null;
   if (audio) {
+    audio.onended = null;
+    audio.onerror = null;
     audio.pause();
     audio = null;
   }
@@ -83,7 +85,14 @@ export async function speak(id: string, text: string) {
     await audio.play();
     set({ loadingId: null, playingId: id });
   } catch (err) {
-    if ((err as Error).name === "AbortError") return;
+    const name = (err as Error).name;
+    if (name === "AbortError") return;
+    // the browser blocked playback (no tap yet): not a voice failure, just reset this button
+    if (name === "NotAllowedError") {
+      console.warn("[voice] playback blocked by the browser; tap listen again");
+      stop();
+      return;
+    }
     disable(err);
   }
 }
