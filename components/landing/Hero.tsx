@@ -37,17 +37,17 @@ export function Hero() {
             ))}
           </p>
 
-          {/* cast shadows sit on the "paper", under the floating objects */}
+          {/* cast shadows sit on the "paper", under the objects */}
           <span className="pointer-events-none absolute left-[24%] top-[60%] h-[16cqw] w-[44cqw] rotate-[8deg] rounded-[50%] bg-ink/25 mix-blend-multiply blur-[22px]" />
           <span className="pointer-events-none absolute left-[58%] top-[63%] h-[11cqw] w-[38cqw] rotate-[6deg] rounded-[50%] bg-ink/20 mix-blend-multiply blur-[20px]" />
 
           {/* sphere */}
           <span
-            className="float sphere absolute left-[18%] top-[22%] aspect-square w-[37cqw] sm:left-[19%] sm:w-[36cqw]"
+            className="sphere absolute left-[18%] top-[22%] aspect-square w-[37cqw] sm:left-[19%] sm:w-[36cqw]"
             style={{ ["--s" as string]: "36cqw" }}
           />
           {/* puffy pad */}
-          <PuffyPad className="float-slow absolute left-[56%] top-[36%] w-[40cqw] drop-shadow-[0_10px_14px_rgb(31_35_64/0.12)] sm:left-[57%]" />
+          <PuffyPad className="absolute left-[56%] top-[36%] w-[40cqw] drop-shadow-[0_10px_14px_rgb(31_35_64/0.12)] sm:left-[57%]" />
         </div>
       </div>
 

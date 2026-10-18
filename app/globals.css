@@ -152,23 +152,6 @@ summary {
 }
 
 /* ---------- motion ---------- */
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-.float {
-  animation: float 6s ease-in-out infinite;
-}
-.float-slow {
-  animation: float 8s ease-in-out infinite;
-  animation-delay: -2s;
-}
-
 @keyframes typing {
   0%,
   60%,
