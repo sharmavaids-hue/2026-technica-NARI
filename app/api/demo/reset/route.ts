@@ -2,7 +2,9 @@
 // 3 past cycles + day 2 of a current period, and sets the date back to today.
 // Safe to run before every demo. Only ever touches the demo account.
 import { createClient } from "@supabase/supabase-js";
+import { syncChat } from "@/lib/chat-sync";
 import { getAppDate } from "@/lib/date";
+import { derive } from "@/lib/derive";
 import { buildDemoState, demoProfile } from "@/lib/demo-seed";
 import { supabaseStore } from "@/lib/store/supabase";
 import { isSupabaseConfigured, SUPABASE_KEY, SUPABASE_URL } from "@/lib/supabase/config";
@@ -33,6 +35,9 @@ export async function GET() {
       { dayLogs: demo.dayLogs, padLogs: demo.padLogs, messages: demo.messages },
       { name: "arshia", cycleLength: 28, periodLength: 5, lastPeriodStart: demo.profile.lastPeriodStart, dayOffset: 0 },
     );
+    // post today's check-in now, so the chat already has it when the demo opens
+    const seeded = await store.load();
+    await syncChat(store, derive(seeded, today), seeded.messages);
     const check = await store.load();
     return Response.json({
       ok: true,

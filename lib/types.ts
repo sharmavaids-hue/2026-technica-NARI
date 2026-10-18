@@ -126,10 +126,21 @@ export interface PadInput {
   date?: ISODate; // defaults to today
 }
 
+/** Why a photo guess failed, so the UI can say something useful. */
+export type PadFailReason =
+  | "no-key" // no Gemini key on the server
+  | "busy" // Gemini overloaded or out of quota: "nari's AI is busy, pick it yourself"
+  | "timeout"
+  | "blocked" // Gemini's safety filter refused the image
+  | "not-a-pad" // Gemini didn't see a pad in the photo
+  | "bad-photo" // missing, too big, or not an image
+  | "error";
+
 export interface PadGuess {
   soak: Soak | null;
   clot: Clot | null;
-  ok: boolean; // false = Gemini failed or timed out; let the user pick
+  ok: boolean; // false = no guess; let the user pick
+  reason: PadFailReason | null; // set when ok is false
 }
 
 export interface PadCheckData {

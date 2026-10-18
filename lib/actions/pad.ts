@@ -27,14 +27,14 @@ export async function getPadCheck(): Promise<PadCheckData> {
 export async function guessPad(formData: FormData): Promise<PadGuess> {
   const file = formData.get("photo");
   if (!(file instanceof Blob) || file.size === 0 || file.size > 4_000_000) {
-    return { soak: null, clot: null, ok: false };
+    return { soak: null, clot: null, ok: false, reason: "bad-photo" };
   }
   const mime = file.type || "image/jpeg";
-  if (!mime.startsWith("image/")) return { soak: null, clot: null, ok: false };
+  if (!mime.startsWith("image/")) return { soak: null, clot: null, ok: false, reason: "bad-photo" };
   const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-  const guess = await guessPadFromImage(base64, mime);
-  if (!guess) return { soak: null, clot: null, ok: false };
-  return { ...guess, ok: true };
+  const r = await guessPadFromImage(base64, mime);
+  if (!r.ok) return { soak: null, clot: null, ok: false, reason: r.reason };
+  return { soak: r.soak, clot: r.clot, ok: true, reason: null };
 }
 
 export async function savePad(input: PadInput): Promise<SavePadResult> {

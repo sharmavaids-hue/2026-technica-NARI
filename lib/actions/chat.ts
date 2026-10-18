@@ -5,7 +5,7 @@ import { loadAll } from "../app-state";
 import { diffDays, formatMonthDay } from "../date";
 import { derive } from "../derive";
 import { chatTurn } from "../gemini";
-import { scheduledFor } from "../schedule";
+import { byTime, didItComePending, syncChat } from "../chat-sync";
 import { CRISIS_REPLY, GET_HELP, isCrisisText, isUrgentText } from "../signals";
 import type { ChatCard, ChatData, ChatMessage, MessageKind, Rating } from "../types";
 
@@ -21,13 +21,23 @@ function make(today: string, sender: "nari" | "user", kind: MessageKind, body: s
   };
 }
 
-const byTime = (a: ChatMessage, b: ChatMessage) => Date.parse(a.createdAt) - Date.parse(b.createdAt);
+// used only when Gemini can't answer: warm, varied, never the same line twice in a row
+const FALLBACKS_PERIOD = [
+  "i'm here. tell me a bit more about how today's going?",
+  "i hear you. what's been the hardest part of today so far?",
+  "that's a lot to deal with on top of your period. what would make tonight a little easier?",
+  "thanks for telling me. is it more the cramps or the tired that's getting to you right now?",
+];
+const FALLBACKS_OTHER = [
+  "i'm here. tell me a bit more?",
+  "i'm listening. what's on your mind?",
+  "thanks for telling me. how are you feeling about it?",
+];
 
-/** Is today's "did your period come?" still waiting for an answer? */
-function didItComePending(messages: ChatMessage[], today: string): boolean {
-  const sorted = [...messages].sort(byTime);
-  const i = sorted.findLastIndex((m) => m.appDate === today && m.kind === "did-it-come");
-  return i >= 0 && !sorted.slice(i + 1).some((m) => m.sender === "user" || m.kind === "nari");
+function pickFallback(messages: ChatMessage[], periodDay: number | null): string {
+  const pool = periodDay ? FALLBACKS_PERIOD : FALLBACKS_OTHER;
+  const used = new Set(messages.filter((m) => m.sender === "nari").slice(-8).map((m) => m.body));
+  return pool.find((line) => !used.has(line)) ?? pool[messages.length % pool.length];
 }
 
 type BarsCard = Extract<ChatCard, { type: "bars" }>;
@@ -41,14 +51,7 @@ function todaysBars(messages: ChatMessage[], today: string): BarsCard | null {
 /** Open the chat: adds today's scheduled message (once) and returns history. */
 export async function getChat(): Promise<ChatData> {
   const { store, raw: before, d } = await loadAll();
-
-  // the period got logged some other way (pad, calendar edit): stop asking "did it come?"
-  if (d.periodDay && didItComePending(before.messages, d.today)) {
-    await store.addMessages([
-      make(d.today, "nari", "nari", `looks like your period's already on your calendar, so you're on day ${d.periodDay}. go easy on yourself today`),
-    ]);
-  }
-  await store.addMessages(scheduledFor(d));
+  await syncChat(store, d, before.messages);
   const raw = await store.load();
 
   const pending = !d.periodDay && didItComePending(raw.messages, d.today);
@@ -67,8 +70,8 @@ export async function getChat(): Promise<ChatData> {
 export async function sendMessage(text: string): Promise<ChatData> {
   const t = String(text ?? "").trim().slice(0, 1000);
   if (!t) return getChat();
-  const { store, d } = await loadAll();
-  await store.addMessages(scheduledFor(d)); // today's question always comes before the reply
+  const { store, raw: before, d } = await loadAll();
+  await syncChat(store, d, before.messages); // today's question always comes before the reply
   const raw = await store.load();
   const today = d.today;
   const lower = t.toLowerCase();
@@ -107,16 +110,17 @@ export async function sendMessage(text: string): Promise<ChatData> {
   } else if (lower === "log a pad") {
     nari("tap pad check to log it. it takes three taps.");
   } else {
-    const recent = [...raw.messages]
+    const history = [...raw.messages]
       .sort(byTime)
-      .slice(-6)
-      .map((m) => `${m.sender}: ${m.body}`);
+      .filter((m) => m.card?.type !== "bars" && m.card?.type !== "signal")
+      .slice(-15)
+      .map((m) => ({ sender: m.sender, body: m.body }));
     const turn = await chatTurn(t, {
       today,
       periodDay: d.periodDay,
       nextPeriod: d.nextStart ? formatMonthDay(d.nextStart) : null,
       daysUntilNext: d.nextStart ? diffDays(today, d.nextStart) : null,
-      recent,
+      history,
     });
 
     if (turn?.crisis) {
@@ -151,10 +155,7 @@ export async function sendMessage(text: string): Promise<ChatData> {
           if (changed) nari(prev ? "updated what i heard:" : "got it. here's what i heard:", "bars", next);
         }
       }
-      const fallback = d.periodDay
-        ? "thanks for telling me. how's the rest of your day going?"
-        : "i'm here. tell me more?";
-      nari(turn?.reply || fallback);
+      nari(turn?.reply || pickFallback(raw.messages, d.periodDay));
     }
   }
 

@@ -3,11 +3,21 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isISODate, loadAll } from "../app-state";
+import { syncChat } from "../chat-sync";
+import { derive } from "../derive";
 import { buildDemoState } from "../demo-seed";
 import { getAppDate } from "../date";
+import type { Store } from "../store/types";
 import { isSupabaseConfigured } from "../supabase/config";
 import { createClient } from "../supabase/server";
 import type { ActionResult, Profile, QuizAnswers, SettingsInput } from "../types";
+
+/** After the date or data changes, post that day's nari message right away. */
+async function postTodaysMessage(store: Store) {
+  const raw = await store.load();
+  const d = derive(raw, getAppDate(raw.profile.dayOffset));
+  await syncChat(store, d, raw.messages);
+}
 
 const clampInt = (v: unknown, lo: number, hi: number, dflt: number) => {
   const n = Math.round(Number(v));
@@ -50,6 +60,7 @@ export async function saveQuiz(answers: QuizAnswers): Promise<ActionResult> {
 export async function skipToTomorrow(): Promise<ActionResult> {
   const { store, raw } = await loadAll();
   await store.updateProfile({ dayOffset: raw.profile.dayOffset + 1 });
+  await postTodaysMessage(store);
   revalidatePath("/app", "layout");
   return { ok: true };
 }
@@ -58,6 +69,7 @@ export async function skipToTomorrow(): Promise<ActionResult> {
 export async function resetDemoDate(): Promise<ActionResult> {
   const { store } = await loadAll();
   await store.updateProfile({ dayOffset: 0 });
+  await postTodaysMessage(store);
   revalidatePath("/app", "layout");
   return { ok: true };
 }
@@ -77,6 +89,7 @@ export async function loadDemoData(): Promise<ActionResult> {
       dayOffset: 0,
     },
   );
+  await postTodaysMessage(store);
   revalidatePath("/app", "layout");
   return { ok: true };
 }

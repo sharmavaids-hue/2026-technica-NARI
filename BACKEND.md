@@ -15,7 +15,7 @@ Every screen gets its data from **server actions** in `lib/actions/*` and types 
 | call | returns | use |
 |---|---|---|
 | `getPadCheck()` | `PadCheckData` | score sphere, today's pads, `signals` (get-help if 3+ full pads in 3h) |
-| `guessPad(formData)` | `PadGuess` | `formData.append("photo", blob)` after resizing to ~1024px JPEG. `ok:false` = no guess, let her pick |
+| `guessPad(formData)` | `PadGuess` | `formData.append("photo", blob)` after resizing to ~1024px JPEG. `ok:false` = no guess, let her pick. `reason` says why: `busy` (AI busy or out of quota), `timeout`, `blocked` (safety filter), `not-a-pad`, `bad-photo`, `no-key`, `error` |
 | `savePad({soak, clot, leaked, aiSoak, aiClot})` | `SavePadResult` | `added` ("+6 points"), `before` → `score.value` for the count-up, `signals` |
 
 ## Chat: `lib/actions/chat.ts`
@@ -27,7 +27,7 @@ Every screen gets its data from **server actions** in `lib/actions/*` and types 
 
 Cards (`message.card`): `bars` (if `manual: true`, Gemini failed, so open adjust with empty values; if `confirmed: true`, hide the buttons), `signal`, `get-help`. The "log a pad" chip should navigate to Pad Check instead of calling `sendMessage`. For timestamps, use `createdAt` for the time and `appDate` for the day label (the demo skip moves `appDate`).
 
-Chat behavior: every typed message gets a real reply from nari (Gemini, ~10s timeout). During the period, a bars card appears at most once a day, plus an "updated what i heard:" card only when the numbers change. Crisis or self-harm language gets 988 + UMD Counseling Center (301) 314-7651 from plain code, never AI. If a period gets logged elsewhere, a pending "did it come?" resolves itself. Pad photo guesses have a 15s timeout.
+Chat behavior: every typed message gets a real reply from nari (Gemini, ~10s timeout). During the period, a bars card appears at most once a day, plus an "updated what i heard:" card only when the numbers change. Crisis or self-harm language gets 988 + UMD Counseling Center (301) 314-7651 from plain code, never AI. If a period gets logged elsewhere, a pending "did it come?" resolves itself. Pad photo guesses have an 18s timeout, chat 12s. Gemini tries `GEMINI_MODEL` first, then a fallback chain (each model has its own free quota) and skips tired models for a while. Skip to tomorrow, load demo data and `/api/demo/reset` post the new day's nari message themselves. When Gemini can't answer, chat uses warm rotating fallback lines.
 
 ## Doctor page: `lib/actions/doctor.ts`
 `getDoctor()` → `DoctorData`: `score`, `period`, `padsPerDay`, `maxPadsInADay`, `days` (bars table), `signals`, `patterns`, `script` (the words to say), `visitReason` (copy to clipboard), `bookingUrl` (UMD myUHC portal; phone 301.314.8184).
