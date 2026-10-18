@@ -19,6 +19,7 @@ function ai(): GoogleGenAI | null {
 
 const FALLBACK_MODEL = "gemini-flash-latest";
 let activeModel = MODEL; // switches to the fallback if GEMINI_MODEL isn't a real model ID
+let lastError: string | null = null;
 
 async function askJson(contents: unknown, schema: object): Promise<unknown | null> {
   const g = ai();
@@ -43,15 +44,18 @@ async function askJson(contents: unknown, schema: object): Promise<unknown | nul
       res = await call(activeModel);
     } catch (err) {
       const msg = (err as Error).message ?? "";
-      const badModel = /not found|404|is not supported|unknown model|invalid model/i.test(msg);
+      const badModel = /not.?found|404|is not supported|unknown model|invalid model/i.test(msg);
       if (!badModel || activeModel === FALLBACK_MODEL) throw err;
       console.warn(`[gemini] model "${activeModel}" not available, using ${FALLBACK_MODEL}`);
       activeModel = FALLBACK_MODEL;
       res = await call(activeModel);
     }
+    lastError = null;
     return res.text ? JSON.parse(res.text) : null;
   } catch (err) {
-    console.warn("[gemini] failed, using manual fallback:", (err as Error).message);
+    const e = err as Error;
+    lastError = e.name === "AbortError" ? `timed out after ${TIMEOUT_MS / 1000}s` : (e.message ?? String(err)).slice(0, 500);
+    console.warn("[gemini] failed, using manual fallback:", lastError);
     return null;
   } finally {
     clearTimeout(timer);
@@ -59,13 +63,13 @@ async function askJson(contents: unknown, schema: object): Promise<unknown | nul
 }
 
 /** For scripts/check-gemini: which model actually answered. */
-export async function geminiSelfTest(): Promise<{ ok: boolean; model: string; sample: unknown }> {
+export async function geminiSelfTest(): Promise<{ ok: boolean; model: string; sample: unknown; error: string | null }> {
   const out = await askJson("Reply with {\"hi\": \"there\"}", {
     type: "object",
     properties: { hi: { type: "string" } },
     required: ["hi"],
   });
-  return { ok: out !== null, model: activeModel, sample: out };
+  return { ok: out !== null, model: activeModel, sample: out, error: out === null ? lastError ?? "no GEMINI_API_KEY" : null };
 }
 
 // ---------- check-in parsing ----------
