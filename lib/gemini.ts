@@ -180,7 +180,7 @@ const TURN_SCHEMA = {
     activities: {
       type: "array",
       items: { type: "string" },
-      description: "2-4 word lowercase chips of what she did today, e.g. 'skipped the gym', 'studied', 'slept 5 hrs'. max 4. empty if none",
+      description: "2-4 word lowercase chips of things she ALREADY did today, e.g. 'skipped the gym', 'studied', 'slept 5 hrs'. never upcoming plans or worries (not 'chem exam tomorrow', not 'have a paper due'). max 4. empty if none",
     },
     mentionsPadChange: { type: "boolean", description: "she mentions changing, soaking or checking a pad/tampon" },
     mentionsDeadline: { type: "boolean", description: "she mentions an exam, assignment or deadline" },
@@ -209,6 +209,7 @@ How you talk:
 - if she sounds hopeless or mentions hurting herself, respond with care, tell her she deserves support right now, and encourage her to reach out to the 988 Suicide & Crisis Lifeline (call or text 988) or UMD's Counseling Center, or someone she trusts. set crisis to true.
 - the context may say how many pads she logged today. if it's a heavy day (several fully soaked pads, or clots), you can gently acknowledge it ("4 pads already today is a heavy day, be gentle with yourself"). never count or log pads for her, and never say it means anything medical.
 - only fill energy, discomfort and mood when what she said shows them; otherwise null.
+- activities are only things she already did today (studied, skipped the gym, napped). upcoming plans like "chem exam tomorrow" are not activities; talk about them in your reply instead.
 
 Examples:
 user: ugh cramps all morning, skipped the gym, slept like 5 hrs
