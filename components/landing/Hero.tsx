@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { PuffyPad } from "./PuffyPad";
+import { HeroType } from "./HeroType";
 
-const LINES = ["know your flow", "trust your body", "know your flow", "trust your body", "know your flow"];
+// Runs before paint: the intro plays once per visit, then the hero just appears.
+const INTRO_ONCE = `try{if(sessionStorage.getItem('nari.intro'))document.documentElement.dataset.intro='seen';sessionStorage.setItem('nari.intro','1')}catch(e){}`;
 
-/** Poster hero: corner labels, stacked serif lines, the glossy sphere and puffy pad casting soft shadows. */
+/** Poster hero: corner labels, full-bleed editorial type, the "nari." pill. */
 export function Hero() {
   return (
-    <section aria-labelledby="hero-title" className="relative flex min-h-[86dvh] flex-col overflow-hidden px-4 sm:min-h-dvh pb-6 pt-5 sm:px-10 sm:pb-8 sm:pt-7">
+    <section aria-labelledby="hero-title" className="relative flex min-h-[72dvh] flex-col overflow-hidden px-4 pb-6 pt-5 sm:min-h-dvh sm:px-10 sm:pb-8 sm:pt-7">
+      <script dangerouslySetInnerHTML={{ __html: INTRO_ONCE }} />
       <h1 id="hero-title" className="sr-only">
         nari. know your flow, trust your body.
       </h1>
@@ -26,29 +28,9 @@ export function Hero() {
         </p>
       </div>
 
-      {/* the poster */}
-      <div className="relative flex flex-1 items-center justify-center py-6">
-        <div aria-hidden="true" className="relative w-full max-w-[1100px] [container-type:inline-size]">
-          <p className="text-center font-serif text-[18.5cqw] leading-[0.86] tracking-[-0.02em] text-blue sm:text-[17cqw]">
-            {LINES.map((l, i) => (
-              <span key={i} className={`block whitespace-nowrap ${i % 2 ? "italic" : ""}`}>
-                {l}
-              </span>
-            ))}
-          </p>
-
-          {/* cast shadows sit on the "paper", under the objects */}
-          <span className="pointer-events-none absolute left-[24%] top-[60%] h-[16cqw] w-[44cqw] rotate-[8deg] rounded-[50%] bg-ink/25 mix-blend-multiply blur-[22px]" />
-          <span className="pointer-events-none absolute left-[58%] top-[63%] h-[11cqw] w-[38cqw] rotate-[6deg] rounded-[50%] bg-ink/20 mix-blend-multiply blur-[20px]" />
-
-          {/* sphere */}
-          <span
-            className="sphere absolute left-[18%] top-[22%] aspect-square w-[37cqw] sm:left-[19%] sm:w-[36cqw]"
-            style={{ ["--s" as string]: "36cqw" }}
-          />
-          {/* puffy pad */}
-          <PuffyPad className="absolute left-[56%] top-[36%] w-[40cqw] drop-shadow-[0_10px_14px_rgb(31_35_64/0.12)] sm:left-[57%]" />
-        </div>
+      {/* the poster: type is the hero */}
+      <div className="relative flex flex-1 flex-col justify-center py-4">
+        <HeroType />
       </div>
 
       {/* bottom labels */}

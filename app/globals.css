@@ -202,6 +202,15 @@ dialog.sheet[open] {
   }
 }
 
+/* ---------- landing hero: lines rise in once per visit (skipped after the first view) ---------- */
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(0.35em); }
+  70% { opacity: 1; transform: translateY(-0.03em); }
+  to { opacity: 1; transform: none; }
+}
+.hero-rise { animation: hero-rise 900ms cubic-bezier(0.22, 1.2, 0.36, 1) backwards; }
+[data-intro="seen"] .hero-rise { animation: none; }
+
 /* ---------- calendar month covers ---------- */
 .swim-cover {
   container-type: size;
