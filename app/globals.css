@@ -390,6 +390,43 @@ dialog.sheet[open] {
   to { opacity: 0; transform: translate(-50%, -50%) scale(3.2); }
 }
 .swim-ripple { animation: swim-ripple 1600ms var(--ease-out-soft) forwards; }
+/* pop the bubbles: still (each resting at its own height) unless motion is welcome */
+.bubble {
+  transform: translateY(var(--rest)) translateX(-50%);
+  transition: scale 120ms;
+}
+.bubble:active { scale: 0.86 1.08; }
+@media (prefers-reduced-motion: no-preference) {
+  .bubble {
+    animation: bubble-rise linear infinite;
+  }
+  .bubbles-paused .bubble { animation-play-state: paused; }
+}
+@keyframes bubble-rise {
+  0% { transform: translate(-50%, 110%); }
+  25% { transform: translate(calc(-50% + 8px), -40px); }
+  50% { transform: translate(calc(-50% - 6px), -110px); }
+  75% { transform: translate(calc(-50% + 6px), -180px); }
+  100% { transform: translate(-50%, -260px); }
+}
+@keyframes pop-ring {
+  from { opacity: 0.9; transform: translate(-50%, -50%) scale(0.5); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
+}
+.pop-ring { animation: pop-ring 420ms var(--ease-out-soft) forwards; }
+@keyframes burst-dot {
+  from { opacity: 1; transform: rotate(var(--a)) translateX(6px); }
+  to { opacity: 0; transform: rotate(var(--a)) translateX(28px); }
+}
+.burst-dot { animation: burst-dot 520ms var(--ease-out-soft) forwards; }
+@keyframes pop-note {
+  0% { opacity: 0; transform: translate(-50%, -6px); }
+  15% { opacity: 1; transform: translate(-50%, -18px); }
+  75% { opacity: 1; transform: translate(-50%, -46px); }
+  100% { opacity: 0; transform: translate(-50%, -58px); }
+}
+.pop-note { animation: pop-note 2600ms var(--ease-out-soft) forwards; }
+
 @keyframes cover-turn {
   from { opacity: 0; transform: perspective(900px) rotateX(-10deg) translateY(-8px); }
 }
@@ -501,7 +538,7 @@ dialog.sheet[open] {
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .story {
-      height: 320vh;
+      height: 440vh;
       view-timeline-name: --story;
     }
     .story-sticky {
