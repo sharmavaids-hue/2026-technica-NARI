@@ -238,6 +238,47 @@ dialog.sheet[open] {
   }
 }
 
+/* ---------- landing: card 01 "snap" mini demo (finished state by default) ---------- */
+@property --snap-n {
+  syntax: "<integer>";
+  inherits: true;
+  initial-value: 53;
+}
+.snap-score::after {
+  counter-reset: snap var(--snap-n);
+  content: counter(snap);
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .snap-card {
+      view-timeline-name: --snap;
+    }
+    .snap-tag,
+    .snap-check,
+    .snap-score {
+      animation-timeline: --snap;
+      animation-range: entry 40% cover 55%;
+      animation-fill-mode: both;
+      animation-timing-function: linear;
+    }
+    .snap-tag { animation-name: snap-tag; }
+    .snap-check { animation-name: snap-check; }
+    .snap-score { animation-name: snap-score; }
+  }
+}
+@keyframes snap-tag {
+  0%, 25% { opacity: 0; scale: 0.5; }
+  35%, 100% { opacity: 1; scale: 1; }
+}
+@keyframes snap-check {
+  0%, 50% { opacity: 0; transform: scale(0.4); }
+  60%, 100% { opacity: 1; transform: scale(1); }
+}
+@keyframes snap-score {
+  0%, 68% { --snap-n: 48; }
+  88%, 100% { --snap-n: 53; }
+}
+
 /* ---------- landing: "how your score adds up" scroll story ---------- */
 /* finished state by default: full pad, sphere at 26, every step lit */
 @property --story-n {

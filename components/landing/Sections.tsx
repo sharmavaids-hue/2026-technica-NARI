@@ -79,6 +79,27 @@ const HABITS = [
   },
 ];
 
+/** Card 01's tiny demo: blurred photo, then "nari's guess", then tap to confirm, then the score ticks up. Decorative. */
+function SnapDemo() {
+  return (
+    <div aria-hidden="true" className="relative mb-auto mt-14 self-center">
+      <div
+        className="h-24 w-36 rounded-[16px] blur-[6px]"
+        style={{ background: "radial-gradient(ellipse 40% 30% at 50% 50%, #b83e4b 0%, #d98a92 55%, #f3ede3 100%)" }}
+      />
+      <span className="snap-tag absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-pill bg-blue px-3 py-0.5 text-sm font-bold text-white">
+        nari&apos;s guess: moderate
+      </span>
+      <span className="snap-check absolute -bottom-3 -right-3 flex size-9 items-center justify-center rounded-full bg-red text-white shadow-md">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12.5l4.5 4.5L19 7.5" />
+        </svg>
+      </span>
+      <span className="snap-score absolute -bottom-4 -left-6 rounded-pill bg-card px-3 py-1 font-serif text-2xl leading-none text-blue shadow-sm" />
+    </div>
+  );
+}
+
 export function HabitsSection() {
   return (
     <section aria-labelledby="habits-title" className="px-5 py-20 sm:px-10 sm:py-28">
@@ -89,7 +110,8 @@ export function HabitsSection() {
         <ol className="reveal grid gap-5 md:grid-cols-3">
           {HABITS.map((h, i) => (
             <li key={h.title}>
-              <Card tone={h.tone} arch halftone className="flex min-h-[23rem] flex-col justify-end gap-2 p-7 sm:min-h-[26rem]">
+              <Card tone={h.tone} arch halftone className="snap-card flex min-h-[23rem] flex-col justify-end gap-2 p-7 sm:min-h-[26rem]">
+                {i === 0 && <SnapDemo />}
                 <span aria-hidden="true" className="font-serif text-6xl leading-none text-red">
                   {String(i + 1).padStart(2, "0")}
                 </span>
