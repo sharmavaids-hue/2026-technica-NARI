@@ -12,8 +12,8 @@ type Size = "md" | "lg";
 
 const base =
   "inline-flex items-center justify-center gap-2 rounded-pill font-sans font-bold leading-tight " +
-  "transition-[filter,background-color,transform] duration-150 active:scale-[0.98] " +
-  "disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 text-center";
+  "transition-[filter,background-color,scale] " +
+  "disabled:cursor-not-allowed disabled:opacity-45 text-center";
 
 const sizes: Record<Size, string> = {
   md: "min-h-11 px-5 text-[0.95rem]",

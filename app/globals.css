@@ -91,6 +91,23 @@ summary {
   touch-action: manipulation;
 }
 
+/* jelly press: everything tappable squishes a little and springs back */
+button:not(:disabled),
+a[class*="rounded-pill"],
+label:has(> input[type="radio"]),
+label:has(> input[type="file"]) {
+  transition-property: scale, background-color, border-color, color, filter;
+  transition-duration: 380ms;
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+button:not(:disabled):active,
+a[class*="rounded-pill"]:active,
+label:has(> input[type="radio"]):active,
+label:has(> input[type="file"]):active {
+  scale: 0.96;
+  transition-duration: 90ms;
+}
+
 .sr-only-focusable:not(:focus):not(:focus-within) {
   position: absolute;
   width: 1px;
