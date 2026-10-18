@@ -17,14 +17,17 @@ function ai(): GoogleGenAI | null {
   return client;
 }
 
+const FALLBACK_MODEL = "gemini-flash-latest";
+let activeModel = MODEL; // switches to the fallback if GEMINI_MODEL isn't a real model ID
+
 async function askJson(contents: unknown, schema: object): Promise<unknown | null> {
   const g = ai();
   if (!g) return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const res = await g.models.generateContent({
-      model: MODEL,
+  const call = (model: string) =>
+    g.models.generateContent({
+      model,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       contents: contents as any,
       config: {
@@ -34,6 +37,18 @@ async function askJson(contents: unknown, schema: object): Promise<unknown | nul
         temperature: 0.2,
       },
     });
+  try {
+    let res;
+    try {
+      res = await call(activeModel);
+    } catch (err) {
+      const msg = (err as Error).message ?? "";
+      const badModel = /not found|404|is not supported|unknown model|invalid model/i.test(msg);
+      if (!badModel || activeModel === FALLBACK_MODEL) throw err;
+      console.warn(`[gemini] model "${activeModel}" not available, using ${FALLBACK_MODEL}`);
+      activeModel = FALLBACK_MODEL;
+      res = await call(activeModel);
+    }
     return res.text ? JSON.parse(res.text) : null;
   } catch (err) {
     console.warn("[gemini] failed, using manual fallback:", (err as Error).message);
@@ -41,6 +56,16 @@ async function askJson(contents: unknown, schema: object): Promise<unknown | nul
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** For scripts/check-gemini: which model actually answered. */
+export async function geminiSelfTest(): Promise<{ ok: boolean; model: string; sample: unknown }> {
+  const out = await askJson("Reply with {\"hi\": \"there\"}", {
+    type: "object",
+    properties: { hi: { type: "string" } },
+    required: ["hi"],
+  });
+  return { ok: out !== null, model: activeModel, sample: out };
 }
 
 // ---------- check-in parsing ----------

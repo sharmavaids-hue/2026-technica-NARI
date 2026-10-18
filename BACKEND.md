@@ -40,3 +40,7 @@ Cards (`message.card`): `bars` (if `manual: true`, Gemini failed, so open adjust
 `lib/date.ts` (`formatLong`, `formatShort`, `formatMonthDay`, `weekdayMon0`, `addDays`) · `lib/pbac.ts` (`SOAK_POINTS`, `CLOT_POINTS`, `LEAK_POINTS`, `STATE_LABELS`, `padPoints`) for labels like "moderate · about half · 5 pts".
 
 Note: Next 16 renamed `middleware.ts` to **`proxy.ts`**. That's the file in the repo root.
+
+## Health + demo routes (Aryan)
+- `/api/health`: which env vars are set and whether the 4 Supabase tables respond. `/api/health?gemini=1` also makes one tiny Gemini call and shows which model answered.
+- `/api/demo/reset`: signs in as `DEMO_EMAIL` and loads 3 past cycles plus day 2 of a current period (date back to today). Run it before every demo.
