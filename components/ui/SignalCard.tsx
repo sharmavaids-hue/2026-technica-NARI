@@ -6,12 +6,13 @@ import { StatusPill } from "./StatusPill";
 import { STATE_LABELS } from "@/lib/pbac";
 
 /** A health signal from lib/signals.ts. Urgent ones become the ink get-help card. */
-export function SignalCard({ signal, className = "" }: { signal: Signal; className?: string }) {
+export function SignalCard({ signal, className = "", level = 3 }: { signal: Signal; className?: string; level?: 2 | 3 }) {
+  const H = level === 2 ? "h2" : "h3";
   if (signal.state === "urgent") {
     return (
       <Card tone="ink" as="section" aria-label={signal.title} className={`flex flex-col gap-3 p-6 ${className}`}>
         <StatusPill state="urgent" label={STATE_LABELS.urgent} className="self-start bg-white/10" />
-        <h3 className="font-serif text-3xl leading-tight">{signal.title}</h3>
+        <H className="font-serif text-3xl leading-tight">{signal.title}</H>
         <GetHelpContent compact />
       </Card>
     );
@@ -19,7 +20,7 @@ export function SignalCard({ signal, className = "" }: { signal: Signal; classNa
   return (
     <Card as="section" aria-label={signal.title} className={`flex flex-col gap-2 p-5 ${className}`}>
       <StatusPill state={signal.state} label={STATE_LABELS[signal.state]} className="self-start text-sm" />
-      <h3 className="mt-1 font-bold text-lg leading-snug">{signal.title}</h3>
+      <H className="mt-1 font-bold text-lg leading-snug">{signal.title}</H>
       <p className="text-ink/90">{signal.body}</p>
     </Card>
   );

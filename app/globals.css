@@ -61,6 +61,14 @@ body {
 .on-dark :focus-visible {
   outline-color: var(--color-peach);
 }
+/* text fields always show the ring while typing (date inputs never match :focus-visible in Chrome) */
+input:not([type="radio"]):not([type="checkbox"]):focus,
+input:not([type="radio"]):not([type="checkbox"]):focus-within,
+textarea:focus,
+select:focus {
+  outline: 3px solid var(--color-blue);
+  outline-offset: 2px;
+}
 
 button,
 [role="button"],

@@ -124,7 +124,7 @@ export function ChatView({ data }: { data: ChatData }) {
       return (
         <div className="flex w-full max-w-[min(32rem,90%)] flex-col gap-2 self-start">
           {m.body && <NariBubble>{m.body}</NariBubble>}
-          <SignalCard signal={card.signal} />
+          <SignalCard signal={card.signal} level={2} />
         </div>
       );
     }

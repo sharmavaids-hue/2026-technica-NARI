@@ -46,12 +46,12 @@ export function HeavySection() {
               <span className="font-serif text-[clamp(3.5rem,6vw,5.2rem)] leading-none text-red">{s.n}</span>
               <span className="max-w-[24rem] leading-relaxed">{s.text}</span>
               {s.href ? (
-                <a href={s.href} target="_blank" rel="noopener noreferrer" className="text-sm text-muted underline underline-offset-4">
+                <a href={s.href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center self-start text-sm text-muted underline underline-offset-4">
                   {s.source}
                   <span className="sr-only"> (opens in a new tab)</span>
                 </a>
               ) : (
-                <span className="text-sm text-muted">{s.source}</span>
+                <span className="flex min-h-11 items-center text-sm text-muted">{s.source}</span>
               )}
             </li>
           ))}

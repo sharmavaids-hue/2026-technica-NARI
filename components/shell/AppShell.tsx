@@ -35,7 +35,7 @@ export function AppShell({ name, children }: { name: string; children: ReactNode
 
       {/* ---------- laptop sidebar ---------- */}
       <aside className="no-print sticky top-0 hidden h-dvh w-[250px] shrink-0 flex-col border-r border-line px-5 pb-6 pt-8 lg:flex">
-        <Link href="/app" aria-label="nari home" className="self-start rounded-md">
+        <Link href="/app" aria-label="nari home" className="inline-flex min-h-11 items-center self-start rounded-md">
           <Wordmark size={44} />
         </Link>
         <nav aria-label="main" className="mt-9">
@@ -76,7 +76,7 @@ export function AppShell({ name, children }: { name: string; children: ReactNode
       <div className="flex min-w-0 flex-1 flex-col">
         {/* ---------- phone header ---------- */}
         <header className="no-print flex items-center justify-between px-5 pt-5 lg:hidden">
-          <Link href="/app" aria-label="nari home" className="rounded-md">
+          <Link href="/app" aria-label="nari home" className="inline-flex min-h-11 items-center rounded-md">
             <Wordmark size={34} />
           </Link>
           <span className="text-sm text-muted">{subtitle}</span>
