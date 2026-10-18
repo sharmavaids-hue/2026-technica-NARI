@@ -219,6 +219,9 @@ dialog.sheet[open] {
 }
 
 /* ---------- print (doctor page "save as pdf") ---------- */
+@page {
+  margin: 16mm 14mm;
+}
 @media print {
   .grain,
   .no-print {
