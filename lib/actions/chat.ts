@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { loadAll } from "../app-state";
+import { diffDays, formatMonthDay } from "../date";
 import { derive } from "../derive";
-import { parseCheckin } from "../gemini";
+import { chatTurn } from "../gemini";
 import { scheduledFor } from "../schedule";
-import { GET_HELP, isUrgentText } from "../signals";
+import { CRISIS_REPLY, GET_HELP, isCrisisText, isUrgentText } from "../signals";
 import type { ChatCard, ChatData, ChatMessage, MessageKind, Rating } from "../types";
 
 function make(today: string, sender: "nari" | "user", kind: MessageKind, body: string, card: ChatCard | null = null, offsetMs = 0): ChatMessage {
@@ -20,21 +21,40 @@ function make(today: string, sender: "nari" | "user", kind: MessageKind, body: s
   };
 }
 
+const byTime = (a: ChatMessage, b: ChatMessage) => Date.parse(a.createdAt) - Date.parse(b.createdAt);
+
 /** Is today's "did your period come?" still waiting for an answer? */
 function didItComePending(messages: ChatMessage[], today: string): boolean {
-  const i = messages.findLastIndex((m) => m.appDate === today && m.kind === "did-it-come");
-  return i >= 0 && !messages.slice(i + 1).some((m) => m.sender === "user");
+  const sorted = [...messages].sort(byTime);
+  const i = sorted.findLastIndex((m) => m.appDate === today && m.kind === "did-it-come");
+  return i >= 0 && !sorted.slice(i + 1).some((m) => m.sender === "user" || m.kind === "nari");
+}
+
+type BarsCard = Extract<ChatCard, { type: "bars" }>;
+
+/** Today's latest bars card, if any. */
+function todaysBars(messages: ChatMessage[], today: string): BarsCard | null {
+  const m = [...messages].sort(byTime).findLast((x) => x.appDate === today && x.card?.type === "bars");
+  return m?.card?.type === "bars" ? m.card : null;
 }
 
 /** Open the chat: adds today's scheduled message (once) and returns history. */
 export async function getChat(): Promise<ChatData> {
-  const { store, d } = await loadAll();
+  const { store, raw: before, d } = await loadAll();
+
+  // the period got logged some other way (pad, calendar edit): stop asking "did it come?"
+  if (d.periodDay && didItComePending(before.messages, d.today)) {
+    await store.addMessages([
+      make(d.today, "nari", "nari", `looks like your period's already on your calendar, so you're on day ${d.periodDay}. go easy on yourself today`),
+    ]);
+  }
   await store.addMessages(scheduledFor(d));
   const raw = await store.load();
-  const pending = didItComePending(raw.messages, d.today);
+
+  const pending = !d.periodDay && didItComePending(raw.messages, d.today);
   return {
     today: d.today,
-    messages: [...raw.messages].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)),
+    messages: [...raw.messages].sort(byTime),
     quickReplies: pending
       ? ["yes", "not yet"]
       : d.periodDay
@@ -52,14 +72,17 @@ export async function sendMessage(text: string): Promise<ChatData> {
   const raw = await store.load();
   const today = d.today;
   const lower = t.toLowerCase();
+  const pending = !d.periodDay && didItComePending(raw.messages, today);
   const out: ChatMessage[] = [make(today, "user", "reply", t)];
   const nari = (body: string, kind: MessageKind = "nari", card: ChatCard | null = null) =>
     out.push(make(today, "nari", kind, body, card, out.length * 5));
 
-  if (isUrgentText(t)) {
-    // safety first: keyword check runs before any AI
+  // safety first: plain-code checks run before any AI
+  if (isCrisisText(t)) {
+    nari(CRISIS_REPLY);
+  } else if (isUrgentText(t)) {
     nari("that sounds like it needs care now. you don't have to figure this out alone.", "get-help", { type: "get-help" });
-  } else if (didItComePending(raw.messages, today) && /^(yes|yep|yeah|ya|yup|it did|it came)\b/.test(lower)) {
+  } else if (pending && /^(yes|yep|yeah|ya|yup|it did|it came)\b/.test(lower)) {
     const existing = raw.dayLogs.find((l) => l.date === today);
     await store.upsertDay({
       date: today,
@@ -71,10 +94,10 @@ export async function sendMessage(text: string): Promise<ChatData> {
     });
     await store.updateProfile({ lastPeriodStart: today });
     nari("logged it. day 1 is on your calendar. go easy on yourself today");
-  } else if (didItComePending(raw.messages, today) && /^(no|nope|not yet|nah)\b/.test(lower)) {
+  } else if (pending && /^(no|nope|not yet|nah)\b/.test(lower)) {
     nari("ok, no stress. cycles can shift a few days. i'll check again tomorrow.");
   } else if (lower === "not now") {
-    nari("ok, i'll check in tomorrow. i'm here if anything changes.");
+    nari("ok, no pressure. i'm here if anything changes.");
   } else if (lower === "i feel worse") {
     nari(
       "i'm sorry. if you're soaking a pad every hour, feeling dizzy, or in severe pain, please get care now. otherwise, tell me what's going on.",
@@ -83,22 +106,56 @@ export async function sendMessage(text: string): Promise<ChatData> {
     );
   } else if (lower === "log a pad") {
     nari("tap pad check to log it. it takes three taps.");
-  } else if (d.periodDay) {
-    const parsed = await parseCheckin(t, d.periodDay);
-    const manual = !parsed || (parsed.energy === null && parsed.discomfort === null && parsed.mood === null);
-    nari(manual ? "i couldn't catch the numbers this time. can you set them?" : "got it. here's what i heard:", "bars", {
-      type: "bars",
-      date: today,
-      energy: parsed?.energy ?? null,
-      discomfort: parsed?.discomfort ?? null,
-      mood: parsed?.mood ?? null,
-      activities: parsed?.activities ?? [],
-      confirmed: false,
-      manual,
-    });
-    nari(parsed?.reply || "thanks for telling me. want to log a pad while you're here?");
   } else {
-    nari("i check in during your period and around when it's due. if something feels off, tap \"i feel worse\".");
+    const recent = [...raw.messages]
+      .sort(byTime)
+      .slice(-6)
+      .map((m) => `${m.sender}: ${m.body}`);
+    const turn = await chatTurn(t, {
+      today,
+      periodDay: d.periodDay,
+      nextPeriod: d.nextStart ? formatMonthDay(d.nextStart) : null,
+      daysUntilNext: d.nextStart ? diffDays(today, d.nextStart) : null,
+      recent,
+    });
+
+    if (turn?.crisis) {
+      nari(CRISIS_REPLY);
+    } else {
+      if (d.periodDay) {
+        const prev = todaysBars(raw.messages, today);
+        const hasNumbers = Boolean(turn && (turn.energy || turn.discomfort || turn.mood));
+        if (!turn && !prev) {
+          // Gemini failed and there's no card yet today: let her set the numbers herself
+          nari("i couldn't catch the numbers this time. can you set them?", "bars", {
+            type: "bars", date: today, energy: null, discomfort: null, mood: null, activities: [], confirmed: false, manual: true,
+          });
+        } else if (turn && hasNumbers) {
+          const next: BarsCard = {
+            type: "bars",
+            date: today,
+            energy: turn.energy ?? prev?.energy ?? null,
+            discomfort: turn.discomfort ?? prev?.discomfort ?? null,
+            mood: turn.mood ?? prev?.mood ?? null,
+            activities: [...new Set([...(prev?.activities ?? []), ...turn.activities])].slice(0, 6),
+            confirmed: false,
+            manual: false,
+          };
+          const changed =
+            !prev ||
+            next.energy !== prev.energy ||
+            next.discomfort !== prev.discomfort ||
+            next.mood !== prev.mood ||
+            next.activities.length !== prev.activities.length;
+          // one bars card a day, unless what she said changes the numbers
+          if (changed) nari(prev ? "updated what i heard:" : "got it. here's what i heard:", "bars", next);
+        }
+      }
+      const fallback = d.periodDay
+        ? "thanks for telling me. how's the rest of your day going?"
+        : "i'm here. tell me more?";
+      nari(turn?.reply || fallback);
+    }
   }
 
   await store.addMessages(out);

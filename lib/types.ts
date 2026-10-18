@@ -100,7 +100,7 @@ export interface HomeData {
   daysUntilNext: number | null;
   profile: Profile;
   score: Score;
-  days: Day[]; // every day from 4 months back to 2 months ahead
+  days: Day[]; // every day from 4+ months back to ~13 months ahead
   periods: Period[];
   nextPeriodStart: ISODate | null;
   nextPeriodLabel: string | null; // "nov 13"

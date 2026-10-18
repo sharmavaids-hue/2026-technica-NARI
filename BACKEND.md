@@ -7,7 +7,7 @@ Every screen gets its data from **server actions** in `lib/actions/*` and types 
 ## Home: `lib/actions/home.ts`
 | call | returns | use |
 |---|---|---|
-| `getHome()` | `HomeData` | headline (`todayLabel`, `periodDay`), score card (`score.value/fill/state/label`), calendar (`days[]` with `isPeriod`, `isPredicted`, `isToday`, `ariaLabel`), day panel (a `Day`'s bars: `bleeding/energy/discomfort/mood`, `pads`, `activities`), `patterns[]`, `signals[]`, `nextPeriodLabel`, `gcalUrl` |
+| `getHome()` | `HomeData` (days run ~4 months back to ~13 months ahead, with every predicted period) | headline (`todayLabel`, `periodDay`), score card (`score.value/fill/state/label`), calendar (`days[]` with `isPeriod`, `isPredicted`, `isToday`, `ariaLabel`), day panel (a `Day`'s bars: `bleeding/energy/discomfort/mood`, `pads`, `activities`), `patterns[]`, `signals[]`, `nextPeriodLabel`, `gcalUrl` |
 | `saveDay({date, energy, discomfort, mood, activities})` | `ActionResult` | "edit this day" |
 | `setPeriodDay(date, isPeriod)` | `ActionResult` | "edit period days" mode. Shows `error` if a day has pads or is in the future |
 
@@ -26,6 +26,8 @@ Every screen gets its data from **server actions** in `lib/actions/*` and types 
 | `confirmCheckin(messageId, {energy, discomfort, mood, activities})` | `ChatData` | "looks right", or save after "adjust" |
 
 Cards (`message.card`): `bars` (if `manual: true`, Gemini failed, so open adjust with empty values; if `confirmed: true`, hide the buttons), `signal`, `get-help`. The "log a pad" chip should navigate to Pad Check instead of calling `sendMessage`. For timestamps, use `createdAt` for the time and `appDate` for the day label (the demo skip moves `appDate`).
+
+Chat behavior: every typed message gets a real reply from nari (Gemini, ~10s timeout). During the period, a bars card appears at most once a day, plus an "updated what i heard:" card only when the numbers change. Crisis or self-harm language gets 988 + UMD Counseling Center (301) 314-7651 from plain code, never AI. If a period gets logged elsewhere, a pending "did it come?" resolves itself. Pad photo guesses have a 15s timeout.
 
 ## Doctor page: `lib/actions/doctor.ts`
 `getDoctor()` → `DoctorData`: `score`, `period`, `padsPerDay`, `maxPadsInADay`, `days` (bars table), `signals`, `patterns`, `script` (the words to say), `visitReason` (copy to clipboard), `bookingUrl` (UMD myUHC portal; phone 301.314.8184).

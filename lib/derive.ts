@@ -86,7 +86,9 @@ export function derive(raw: RawState, today: ISODate): Derived {
   const scorePeriod = current ?? lastFinished;
   const periodDay = current ? diffDays(current.start, today) + 1 : null;
 
-  const cycleLength = averageCycleLength(runs, profile.cycleLength);
+  // a stray one-day "period" (a mis-tap) shouldn't drag the average; the latest run always counts
+  const cycleRuns = runs.filter((r, i) => r.dates.length > 1 || i === runs.length - 1);
+  const cycleLength = averageCycleLength(cycleRuns, profile.cycleLength);
   const lastStart = runs.length ? runs[runs.length - 1].start : profile.lastPeriodStart;
   const nextStart = predictNextStart(lastStart, cycleLength, today);
 
@@ -95,12 +97,16 @@ export function derive(raw: RawState, today: ISODate): Derived {
   if (current) {
     for (const d of predictedDates(current.start, profile.periodLength)) if (d > today) predicted.add(d);
   }
-  for (const d of predictedDates(nextStart, profile.periodLength)) predicted.add(d);
+  // predicted periods for about a year ahead, one cycle after another
+  const lastDay = addDays(today, 400);
+  for (let start = nextStart; start && start <= lastDay; start = addDays(start, cycleLength)) {
+    for (const d of predictedDates(start, profile.periodLength)) predicted.add(d);
+  }
 
   const periodOf = (d: ISODate) => periods.find((p) => d >= p.start && d <= p.end) ?? null;
 
   const first = [addDays(today, -130), ...raw.dayLogs.map((l) => l.date), ...padsByDate.keys()].sort()[0];
-  const days: Day[] = dateRange(first, addDays(today, 70)).map((date) => {
+  const days: Day[] = dateRange(first, lastDay).map((date) => {
     const log = logMap.get(date);
     const pads = padsByDate.get(date) ?? [];
     const isPeriod = (log?.isPeriod ?? false) || pads.length > 0;

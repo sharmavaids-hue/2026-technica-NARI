@@ -29,6 +29,25 @@ const URGENT_PATTERNS: RegExp[] = [
   /\bhemorrhag/i,
 ];
 
+// Crisis / self-harm language: answered with resources, never with AI.
+const CRISIS_PATTERNS: RegExp[] = [
+  /kill (my ?self|me)\b/i,
+  /\bsuicid/i,
+  /end (my|it all|my life)\b.*\b(life|all)?/i,
+  /\bwant(ed)? to die\b/i,
+  /\bself[- ]?harm/i,
+  /\b(hurt|cut|harm)(ing)? my ?self\b/i,
+  /no (reason|point) (to|in) (live|living|going on)/i,
+  /don'?t want to (be here|live|exist)/i,
+];
+
+export const CRISIS_REPLY =
+  "i'm really glad you told me, and i'm here. you don't have to carry this alone. you can call or text 988 (suicide & crisis lifeline) any time, or call the UMD counseling center at (301) 314-7651, day or night. if you're in danger right now, call 911.";
+
+export function isCrisisText(text: string): boolean {
+  return CRISIS_PATTERNS.some((re) => re.test(text));
+}
+
 export function isUrgentText(text: string): boolean {
   return URGENT_PATTERNS.some((re) => re.test(text));
 }
