@@ -1,6 +1,8 @@
 // "how the score works": a pinned scroll story. CSS scroll-driven animations only (globals.css, .story-*).
 // Without support or with reduced motion it simply shows the finished state.
 
+import { WaveLiquid } from "@/components/ui/Sphere";
+
 const STEPS = [
   { label: "light pad", pts: 1 },
   { label: "moderate pad", pts: 5 },
@@ -60,10 +62,9 @@ export function ScoreStory() {
                 boxShadow: "inset -8px -10px 24px rgb(31 35 64 / 0.12)",
               }}
             >
-              <span
-                className="story-liquid absolute inset-0 origin-bottom"
-                style={{ background: "radial-gradient(circle at 45% 20%, #cf5a67 0%, #b83e4b 50%, #8a2c38 100%)" }}
-              />
+              <span className="story-liquid absolute inset-0">
+                <WaveLiquid />
+              </span>
               <span
                 className="absolute inset-0 rounded-full"
                 style={{

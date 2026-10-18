@@ -36,6 +36,36 @@ type ScoreSphereProps = {
 };
 
 /**
+ * Watermelon liquid with a soft wave on top. Twice as wide as its box so it can slosh sideways;
+ * the slosh plays once when it mounts (a new level remounts it), never on its own.
+ */
+export function WaveLiquid() {
+  return (
+    <svg className="liquid-wave absolute -left-1/2 -top-[7%] h-[107%] w-[200%]" viewBox="0 0 400 107" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="liquid-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#cf5a67" />
+          <stop offset="0.45" stopColor="#b83e4b" />
+          <stop offset="1" stopColor="#8a2c38" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M0 7 C 25 1, 50 1, 75 7 S 125 13, 150 7 S 200 1, 225 7 S 275 13, 300 7 S 350 1, 375 7 S 400 10, 400 10 V 107 H 0 Z"
+        fill="url(#liquid-fill)"
+      />
+      <path
+        d="M0 7 C 25 1, 50 1, 75 7 S 125 13, 150 7 S 200 1, 225 7 S 275 13, 300 7 S 350 1, 375 7"
+        fill="none"
+        stroke="#e58a95"
+        strokeWidth="1.6"
+        opacity="0.8"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
+/**
  * The period score sphere: glass globe that fills with red toward 100.
  * Purely visual; the number and state words always sit next to it.
  */
@@ -52,15 +82,13 @@ export function ScoreSphere({ size, fill, className = "" }: ScoreSphereProps) {
         boxShadow: `inset ${-size * 0.05}px ${-size * 0.06}px ${size * 0.14}px rgb(31 35 64 / 0.12)`,
       }}
     >
-      {/* liquid: height animates; the curved top is the meniscus */}
+      {/* liquid: the level rises with a spring; the wave sloshes when the level changes, then settles */}
       <span
-        className="fill-in absolute inset-x-0 bottom-0 transition-[height] duration-[1200ms] ease-[var(--ease-out-soft)]"
-        style={{
-          height: pct >= 100 ? "100%" : `${pct}%`,
-          background: "radial-gradient(circle at 45% 20%, #cf5a67 0%, #b83e4b 50%, #8a2c38 100%)",
-          borderRadius: pct >= 100 ? 0 : "50% 50% 0 0 / 10% 10% 0 0",
-        }}
-      />
+        className="liquid-level absolute inset-0"
+        style={{ transform: `translateY(${pct >= 100 ? -6 : 100 - pct}%)` }}
+      >
+        <WaveLiquid key={Math.round(pct)} />
+      </span>
       {/* gloss on top of everything */}
       <span
         className="absolute inset-0 rounded-full"
