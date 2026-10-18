@@ -68,7 +68,7 @@ export function DoctorView({ data }: { data: DoctorData }) {
           <p>no period logged yet. log a few pads and check-ins, and this page fills itself in.</p>
         ) : (
           <>
-            <dl className="grid gap-5 sm:grid-cols-3">
+            <dl className="msg-in grid gap-5 sm:grid-cols-3" style={{ animationDelay: "80ms" }}>
               <div className="flex flex-col gap-1.5">
                 <dt className="flex items-center gap-3 text-muted">
                   PBAC score
@@ -95,7 +95,7 @@ export function DoctorView({ data }: { data: DoctorData }) {
               </div>
             </dl>
 
-            <section aria-labelledby="say-title" className="halftone rounded-card bg-peach p-6 print:break-inside-avoid">
+            <section aria-labelledby="say-title" className="msg-in halftone rounded-card bg-peach p-6 print:break-inside-avoid" style={{ animationDelay: "200ms" }}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 id="say-title" className="font-bold text-lg">
                   what to say
@@ -111,7 +111,7 @@ export function DoctorView({ data }: { data: DoctorData }) {
               </p>
             </section>
 
-            <section aria-labelledby="pads-title" className="flex flex-col gap-3 print:break-inside-avoid">
+            <section aria-labelledby="pads-title" className="msg-in flex flex-col gap-3 print:break-inside-avoid" style={{ animationDelay: "320ms" }}>
               <h3 id="pads-title" className="font-bold text-lg">
                 pads per day
               </h3>
@@ -130,7 +130,7 @@ export function DoctorView({ data }: { data: DoctorData }) {
               </ul>
             </section>
 
-            <section aria-labelledby="table-title" className="flex flex-col gap-3 print:break-inside-avoid">
+            <section aria-labelledby="table-title" className="msg-in flex flex-col gap-3 print:break-inside-avoid" style={{ animationDelay: "440ms" }}>
               <h3 id="table-title" className="font-bold text-lg">
                 daily check-ins
               </h3>
@@ -169,7 +169,7 @@ export function DoctorView({ data }: { data: DoctorData }) {
         )}
 
         {(data.signals.length > 0 || data.patterns.length > 0) && (
-          <section aria-labelledby="noticed-title" className="flex flex-col gap-3 print:break-inside-avoid">
+          <section aria-labelledby="noticed-title" className="msg-in flex flex-col gap-3 print:break-inside-avoid" style={{ animationDelay: "560ms" }}>
             <h3 id="noticed-title" className="font-bold text-lg">
               what nari noticed
             </h3>

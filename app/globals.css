@@ -433,6 +433,9 @@ dialog.sheet[open] {
   margin: 16mm 14mm;
 }
 @media print {
+  .msg-in {
+    animation: none !important;
+  }
   .grain,
   .no-print {
     display: none !important;
