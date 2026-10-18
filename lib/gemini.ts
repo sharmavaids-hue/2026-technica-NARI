@@ -9,7 +9,7 @@ import "server-only";
 // try the next one and skip the tired model for a while.
 
 import { GoogleGenAI } from "@google/genai";
-import type { Clot, PadFailReason, Rating, Soak } from "./types";
+import type { Clot, PadColor, PadFailReason, Rating, Soak } from "./types";
 
 const TEXT_TIMEOUT_MS = 12_000;
 const IMAGE_TIMEOUT_MS = 18_000; // photo guesses take ~8-9s on gemini-3.8-flash
@@ -161,6 +161,7 @@ export interface ChatContext {
   periodDay: number | null;
   nextPeriod: string | null; // "nov 13"
   daysUntilNext: number | null;
+  padsToday: string | null; // e.g. "4 pads today: 2 full, 1 small clot"
   history: { sender: "nari" | "user"; body: string }[]; // oldest first, last ~15
 }
 
@@ -206,6 +207,7 @@ How you talk:
 - never say "abnormal" or "diagnosis". never guess what condition she has.
 - if she mentions dizziness, fainting, soaking a pad every hour, severe pain, or possibly being pregnant, gently tell her this is worth getting checked today.
 - if she sounds hopeless or mentions hurting herself, respond with care, tell her she deserves support right now, and encourage her to reach out to the 988 Suicide & Crisis Lifeline (call or text 988) or UMD's Counseling Center, or someone she trusts. set crisis to true.
+- the context may say how many pads she logged today. if it's a heavy day (several fully soaked pads, or clots), you can gently acknowledge it ("4 pads already today is a heavy day, be gentle with yourself"). never count or log pads for her, and never say it means anything medical.
 - only fill energy, discomfort and mood when what she said shows them; otherwise null.
 
 Examples:
@@ -232,12 +234,13 @@ export async function chatTurn(text: string, ctx: ChatContext): Promise<ChatTurn
     ctx.nextPeriod && ctx.daysUntilNext !== null
       ? ` her next period is expected ${ctx.nextPeriod} (in ${ctx.daysUntilNext} days).`
       : "";
+  const pads = ctx.padsToday ? ` ${ctx.padsToday}.` : "";
   // real multi-turn history so nari can follow the conversation
   const contents = [
     ...ctx.history
       .filter((m) => m.body.trim())
       .map((m) => ({ role: m.sender === "user" ? "user" : "model", parts: [{ text: m.body.slice(0, 600) }] })),
-    { role: "user", parts: [{ text: `[context: today is ${ctx.today}. ${where}${next}]\n${text.slice(0, 1000)}` }] },
+    { role: "user", parts: [{ text: `[context: today is ${ctx.today}. ${where}${next}${pads}]\n${text.slice(0, 1000)}` }] },
   ];
   // Gemini wants the conversation to start with a user turn
   while (contents.length > 1 && contents[0].role !== "user") contents.shift();
@@ -268,19 +271,26 @@ const PAD_SCHEMA = {
     soak: {
       type: ["string", "null"],
       enum: ["light", "moderate", "full", null],
-      description: "light = a few spots/lightly stained, moderate = about half soaked, full = soaked through",
+      description:
+        "judge by how much of the pad's absorbent core is stained. light = a few spots, under about a quarter of the core. moderate = roughly a quarter to two thirds of the core. full = most of the core (about two thirds or more), or the stain reaches the core's edges or ends. when torn between moderate and full, pick full.",
     },
     clot: {
       type: ["string", "null"],
       enum: ["none", "small", "large", null],
-      description: "large = about the size of a US quarter (24mm) or bigger",
+      description:
+        "size clots against the pad: a typical pad core is about 6-7 cm wide, and a US quarter is 2.4 cm, about a third of the pad's width. large = any clot about that size or bigger. small = visible clots smaller than that. none = no distinct clumps.",
+    },
+    color: {
+      type: ["string", "null"],
+      enum: ["pink", "bright-red", "dark-red", "brown-black", "orange-gray", "unsure", null],
+      description: "the general color of the blood on the pad. use 'unsure' if lighting makes it hard to tell",
     },
   },
-  required: ["isPad", "soak", "clot"],
+  required: ["isPad", "soak", "clot", "color"],
 };
 
 export type PadPhotoResult =
-  | { ok: true; soak: Soak | null; clot: Clot | null; model: string | null }
+  | { ok: true; soak: Soak | null; clot: Clot | null; color: PadColor | null; model: string | null }
   | { ok: false; reason: PadFailReason };
 
 export async function guessPadFromImage(base64: string, mimeType: string): Promise<PadPhotoResult> {
@@ -291,7 +301,7 @@ export async function guessPadFromImage(base64: string, mimeType: string): Promi
         parts: [
           { inlineData: { data: base64, mimeType } },
           {
-            text: "This is a photo a user took of her own menstrual pad to score it with the PBAC chart (Higham 1990), a standard clinical tool doctors use to measure menstrual blood loss. Estimate how soaked the pad is and whether there are clots. This is only a suggestion; she confirms it herself.",
+            text: "This is a photo a user took of her own menstrual pad to score it with the PBAC chart (Higham 1990), a standard clinical tool doctors use to measure menstrual blood loss. Estimate how soaked the pad is and whether there are clots, using the definitions in the schema. People tend to under-report heavy bleeding, so do not round a heavily stained pad down. Also give the general color of the blood, only as one of the listed categories. Lighting and cameras distort color, so say 'unsure' rather than guess. Never comment on what the color means. This is only a suggestion; she confirms it herself.",
           },
         ],
       },
@@ -300,17 +310,19 @@ export async function guessPadFromImage(base64: string, mimeType: string): Promi
     { timeoutMs: IMAGE_TIMEOUT_MS, label: "pad" },
   );
   if (!r.ok) return { ok: false, reason: r.reason ?? "error" };
-  const out = r.data as { isPad?: boolean; soak?: Soak | null; clot?: Clot | null };
+  const out = r.data as { isPad?: boolean; soak?: Soak | null; clot?: Clot | null; color?: PadColor | null };
   if (out.isPad === false) {
     console.warn("[gemini:pad] model said this is not a pad");
     return { ok: false, reason: "not-a-pad" };
   }
   const soaks: Soak[] = ["light", "moderate", "full"];
   const clots: Clot[] = ["none", "small", "large"];
+  const colors: PadColor[] = ["pink", "bright-red", "dark-red", "brown-black", "orange-gray", "unsure"];
   return {
     ok: true,
     soak: out.soak && soaks.includes(out.soak) ? out.soak : null,
     clot: out.clot && clots.includes(out.clot) ? out.clot : null,
+    color: out.color && colors.includes(out.color) ? out.color : null,
     model: r.model,
   };
 }

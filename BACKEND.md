@@ -15,8 +15,8 @@ Every screen gets its data from **server actions** in `lib/actions/*` and types 
 | call | returns | use |
 |---|---|---|
 | `getPadCheck()` | `PadCheckData` | score sphere, today's pads, `signals` (get-help if 3+ full pads in 3h) |
-| `guessPad(formData)` | `PadGuess` | `formData.append("photo", blob)` after resizing to ~1024px JPEG. `ok:false` = no guess, let her pick. `reason` says why: `busy` (AI busy or out of quota), `timeout`, `blocked` (safety filter), `not-a-pad`, `bad-photo`, `no-key`, `error` |
-| `savePad({soak, clot, leaked, aiSoak, aiClot})` | `SavePadResult` | `added` ("+6 points"), `before` → `score.value` for the count-up, `signals` |
+| `guessPad(formData)` | `PadGuess` | `formData.append("photo", blob)` after resizing to ~1024px JPEG. `ok:false` = no guess, let her pick. `color` is Gemini's color category (`pink`/`bright-red`/`dark-red`/`brown-black`/`orange-gray`/`unsure`), null on failure; it never explains meaning (that's rule-based in the UI). `reason` says why: `busy` (AI busy or out of quota), `timeout`, `blocked` (safety filter), `not-a-pad`, `bad-photo`, `no-key`, `error` |
+| `savePad({soak, clot, leaked, aiSoak, aiClot, color?, aiColor?, note?})` | `SavePadResult` | `added` ("+6 points"), `before` → `score.value` for the count-up, `signals` |
 
 ## Chat: `lib/actions/chat.ts`
 | call | returns | use |
@@ -46,3 +46,9 @@ Note: Next 16 renamed `middleware.ts` to **`proxy.ts`**. That's the file in the 
 ## Health + demo routes (Aryan)
 - `/api/health`: which env vars are set and whether the 4 Supabase tables respond. `/api/health?gemini=1` also makes one tiny Gemini call and shows which model answered.
 - `/api/demo/reset`: signs in as `DEMO_EMAIL` and loads 3 past cycles plus day 2 of a current period (date back to today). Run it before every demo.
+
+## Pad color + note
+`PadLog` now has `color`, `aiColor` (both `PadColor | null`) and `note` (≤140 chars). They arrive on `Day.pads` (Home), `PadCheckData.todayPads` and `DoctorData.days[].pads`. The database columns come from `supabase/migrations/20261018000000_pad_color_note.sql`. Until that runs, saving still works but color/note aren't stored (`/api/health` shows the migration status). Chat now receives today's pad summary as context.
+
+## Voice: `POST /api/voice/speak`
+Body `{ text }` (≤600 chars, signed in) → `audio/mpeg` (ElevenLabs). Failures: JSON `{ ok: false, reason }` with `no-key` (503), `busy` (429/503), `too-long` (400), `error`, `unauthorized` (401). On any failure, hide the listen button and keep captions. Short lines (≤120 chars) are cached. Env: `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `ELEVENLABS_MODEL`.

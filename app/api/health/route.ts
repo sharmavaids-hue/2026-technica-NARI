@@ -18,6 +18,9 @@ export async function GET(request: Request) {
       GEMINI_MODEL: process.env.GEMINI_MODEL || "(default gemini-flash-latest)",
       DEMO_EMAIL: Boolean(process.env.DEMO_EMAIL),
       DEMO_PASSWORD: Boolean(process.env.DEMO_PASSWORD),
+      ELEVENLABS_API_KEY: Boolean(process.env.ELEVENLABS_API_KEY),
+      ELEVENLABS_VOICE_ID: Boolean(process.env.ELEVENLABS_VOICE_ID),
+      ELEVENLABS_MODEL: process.env.ELEVENLABS_MODEL || "(default eleven_flash_v2_5)",
     },
   };
 
@@ -29,6 +32,9 @@ export async function GET(request: Request) {
       const { error } = await db.from(t).select("*", { head: true, count: "exact" });
       tables[t] = error ? `error: ${error.message}` : "ok";
     }
+    // migration 2 (pad color + note) has run?
+    const { error: colorErr } = await db.from("pad_logs").select("color, ai_color, note", { head: true });
+    tables["pad_logs color+note (migration 2)"] = colorErr ? `missing: run supabase/migrations/20261018000000_pad_color_note.sql` : "ok";
     report.tables = tables;
   }
 

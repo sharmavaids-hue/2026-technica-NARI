@@ -6,7 +6,7 @@
 import { addDays } from "./date";
 import { padPoints } from "./pbac";
 import type { RawDayLog, RawState } from "./derive";
-import type { ChatMessage, Clot, ISODate, PadLog, Profile, Rating, Soak } from "./types";
+import type { ChatMessage, Clot, ISODate, PadColor, PadLog, Profile, Rating, Soak } from "./types";
 
 type PadSpec = [Soak, Clot?, boolean?];
 interface DaySpec {
@@ -18,6 +18,8 @@ interface DaySpec {
 }
 
 const HOURS = ["08:10", "11:40", "14:30", "17:50", "21:15"];
+// typical color by period day (bright early, darker later); confirmed by "her"
+const DAY_COLOR: PadColor[] = ["bright-red", "bright-red", "dark-red", "dark-red", "brown-black"];
 
 // New York in October is UTC-4. Close enough for demo timestamps.
 const at = (date: ISODate, hhmm: string) => `${date}T${hhmm}:00-04:00`;
@@ -73,6 +75,9 @@ export function buildDemoState(today: ISODate, profile: Profile): RawState {
           points: padPoints({ soak, clot, leaked }),
           aiSoak: null,
           aiClot: null,
+          color: DAY_COLOR[i] ?? "dark-red",
+          aiColor: null,
+          note: null,
         });
       });
     });

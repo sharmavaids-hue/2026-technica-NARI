@@ -8,6 +8,9 @@ export type ISODate = string; // "2026-10-17"
 export type Soak = "light" | "moderate" | "full";
 export type Clot = "none" | "small" | "large";
 
+/** General blood color on a pad. A rough category only; cameras distort color. */
+export type PadColor = "pink" | "bright-red" | "dark-red" | "brown-black" | "orange-gray" | "unsure";
+
 /** 1–5 rating from a check-in. null = not logged. */
 export type Rating = 1 | 2 | 3 | 4 | 5;
 
@@ -44,6 +47,9 @@ export interface PadLog {
   points: number;
   aiSoak: Soak | null; // what Gemini guessed (null = no guess)
   aiClot: Clot | null;
+  color: PadColor | null; // what she confirmed (null = not given)
+  aiColor: PadColor | null; // what Gemini guessed
+  note: string | null; // up to 140 characters
 }
 
 /** One calendar day, fully derived and ready to render. */
@@ -123,6 +129,9 @@ export interface PadInput {
   leaked: boolean;
   aiSoak: Soak | null;
   aiClot: Clot | null;
+  color?: PadColor | null;
+  aiColor?: PadColor | null;
+  note?: string | null; // trimmed to 140 characters
   date?: ISODate; // defaults to today
 }
 
@@ -139,6 +148,7 @@ export type PadFailReason =
 export interface PadGuess {
   soak: Soak | null;
   clot: Clot | null;
+  color: PadColor | null; // null when ok is false
   ok: boolean; // false = no guess; let the user pick
   reason: PadFailReason | null; // set when ok is false
 }

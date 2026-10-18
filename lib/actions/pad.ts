@@ -5,10 +5,12 @@ import { isISODate, loadAll } from "../app-state";
 import { derive } from "../derive";
 import { guessPadFromImage } from "../gemini";
 import { padPoints, scoreOf } from "../pbac";
-import type { Clot, PadCheckData, PadGuess, PadInput, PadLog, SavePadResult, Soak } from "../types";
+import type { Clot, PadColor, PadCheckData, PadGuess, PadInput, PadLog, SavePadResult, Soak } from "../types";
 
 const SOAKS: Soak[] = ["light", "moderate", "full"];
 const CLOTS: Clot[] = ["none", "small", "large"];
+const COLORS: PadColor[] = ["pink", "bright-red", "dark-red", "brown-black", "orange-gray", "unsure"];
+const asColor = (v: unknown): PadColor | null => (COLORS.includes(v as PadColor) ? (v as PadColor) : null);
 
 export async function getPadCheck(): Promise<PadCheckData> {
   const { d } = await loadAll();
@@ -27,14 +29,14 @@ export async function getPadCheck(): Promise<PadCheckData> {
 export async function guessPad(formData: FormData): Promise<PadGuess> {
   const file = formData.get("photo");
   if (!(file instanceof Blob) || file.size === 0 || file.size > 4_000_000) {
-    return { soak: null, clot: null, ok: false, reason: "bad-photo" };
+    return { soak: null, clot: null, color: null, ok: false, reason: "bad-photo" };
   }
   const mime = file.type || "image/jpeg";
-  if (!mime.startsWith("image/")) return { soak: null, clot: null, ok: false, reason: "bad-photo" };
+  if (!mime.startsWith("image/")) return { soak: null, clot: null, color: null, ok: false, reason: "bad-photo" };
   const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
   const r = await guessPadFromImage(base64, mime);
-  if (!r.ok) return { soak: null, clot: null, ok: false, reason: r.reason };
-  return { soak: r.soak, clot: r.clot, ok: true, reason: null };
+  if (!r.ok) return { soak: null, clot: null, color: null, ok: false, reason: r.reason };
+  return { soak: r.soak, clot: r.clot, color: r.color, ok: true, reason: null };
 }
 
 export async function savePad(input: PadInput): Promise<SavePadResult> {
@@ -53,6 +55,9 @@ export async function savePad(input: PadInput): Promise<SavePadResult> {
     points: padPoints({ soak: input.soak, clot: input.clot, leaked: Boolean(input.leaked) }),
     aiSoak: SOAKS.includes(input.aiSoak as Soak) ? input.aiSoak : null,
     aiClot: CLOTS.includes(input.aiClot as Clot) ? input.aiClot : null,
+    color: asColor(input.color),
+    aiColor: asColor(input.aiColor),
+    note: typeof input.note === "string" && input.note.trim() ? input.note.trim().slice(0, 140) : null,
   };
   await store.addPad(pad);
 

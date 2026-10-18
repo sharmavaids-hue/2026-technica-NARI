@@ -7,7 +7,7 @@ import { derive } from "../derive";
 import { chatTurn } from "../gemini";
 import { byTime, didItComePending, syncChat } from "../chat-sync";
 import { CRISIS_REPLY, GET_HELP, isCrisisText, isUrgentText } from "../signals";
-import type { ChatCard, ChatData, ChatMessage, MessageKind, Rating } from "../types";
+import type { ChatCard, ChatData, ChatMessage, MessageKind, PadLog, Rating } from "../types";
 
 function make(today: string, sender: "nari" | "user", kind: MessageKind, body: string, card: ChatCard | null = null, offsetMs = 0): ChatMessage {
   return {
@@ -38,6 +38,22 @@ function pickFallback(messages: ChatMessage[], periodDay: number | null): string
   const pool = periodDay ? FALLBACKS_PERIOD : FALLBACKS_OTHER;
   const used = new Set(messages.filter((m) => m.sender === "nari").slice(-8).map((m) => m.body));
   return pool.find((line) => !used.has(line)) ?? pool[messages.length % pool.length];
+}
+
+/** "4 pads logged today: 2 fully soaked, 1 small clot", for nari's context. */
+function padSummary(pads: PadLog[]): string | null {
+  if (!pads.length) return null;
+  const full = pads.filter((p) => p.soak === "full").length;
+  const small = pads.filter((p) => p.clot === "small").length;
+  const large = pads.filter((p) => p.clot === "large").length;
+  const leaks = pads.filter((p) => p.leaked).length;
+  const bits = [
+    full ? `${full} fully soaked` : "",
+    small ? `${small} small clot${small > 1 ? "s" : ""}` : "",
+    large ? `${large} large clot${large > 1 ? "s" : ""}` : "",
+    leaks ? `${leaks} leak${leaks > 1 ? "s" : ""}` : "",
+  ].filter(Boolean);
+  return `${pads.length} pad${pads.length > 1 ? "s" : ""} logged today${bits.length ? `: ${bits.join(", ")}` : ""}`;
 }
 
 type BarsCard = Extract<ChatCard, { type: "bars" }>;
@@ -120,6 +136,7 @@ export async function sendMessage(text: string): Promise<ChatData> {
       periodDay: d.periodDay,
       nextPeriod: d.nextStart ? formatMonthDay(d.nextStart) : null,
       daysUntilNext: d.nextStart ? diffDays(today, d.nextStart) : null,
+      padsToday: padSummary(d.dayMap.get(today)?.pads ?? []),
       history,
     });
 

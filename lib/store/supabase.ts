@@ -70,6 +70,9 @@ const toPad = (r: Row): PadLog => ({
   points: r.points,
   aiSoak: r.ai_soak,
   aiClot: r.ai_clot,
+  color: r.color ?? null, // columns added in migration 2; null until it runs
+  aiColor: r.ai_color ?? null,
+  note: r.note ?? null,
 });
 
 const fromPad = (userId: string, p: PadLog): Row => ({
@@ -83,7 +86,19 @@ const fromPad = (userId: string, p: PadLog): Row => ({
   points: p.points,
   ai_soak: p.aiSoak,
   ai_clot: p.aiClot,
+  color: p.color,
+  ai_color: p.aiColor,
+  note: p.note,
 });
+
+/** Drop the color/note columns (for a database where migration 2 hasn't run yet). */
+const withoutColor = (r: Row): Row => {
+  const { color, ai_color, note, ...rest } = r;
+  void color; void ai_color; void note;
+  return rest;
+};
+const missingColorColumn = (e: { message: string } | null) =>
+  Boolean(e && /(color|ai_color|note).*(column|schema cache)|column.*(color|ai_color|note)/i.test(e.message));
 
 const toMsg = (r: Row): ChatMessage => ({
   id: r.id,
@@ -149,7 +164,9 @@ export function supabaseStore(db: SupabaseClient, userId: string): Store {
     },
 
     async addPad(pad) {
-      const { error } = await db.from("pad_logs").insert(fromPad(userId, pad));
+      const row = fromPad(userId, pad);
+      let { error } = await db.from("pad_logs").insert(row);
+      if (missingColorColumn(error)) ({ error } = await db.from("pad_logs").insert(withoutColor(row)));
       check(error);
     },
 
@@ -170,7 +187,12 @@ export function supabaseStore(db: SupabaseClient, userId: string): Store {
       await this.clearAll();
       await this.updateProfile(profile);
       if (next.dayLogs.length) check((await db.from("day_logs").insert(next.dayLogs.map((l) => fromDay(userId, l)))).error);
-      if (next.padLogs.length) check((await db.from("pad_logs").insert(next.padLogs.map((p) => fromPad(userId, p)))).error);
+      if (next.padLogs.length) {
+        const rows = next.padLogs.map((p) => fromPad(userId, p));
+        let { error } = await db.from("pad_logs").insert(rows);
+        if (missingColorColumn(error)) ({ error } = await db.from("pad_logs").insert(rows.map(withoutColor)));
+        check(error);
+      }
       if (next.messages.length) check((await db.from("messages").insert(next.messages.map((m) => fromMsg(userId, m)))).error);
     },
 
