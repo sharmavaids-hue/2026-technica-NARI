@@ -26,7 +26,7 @@ export function Chip({ selected, className = "", type = "button", ...rest }: Chi
     <button
       type={type}
       aria-pressed={selected}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border-[1.5px] px-5 font-bold transition-colors ${state} ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border-[1.5px] px-4 font-bold sm:px-5 transition-colors ${state} ${className}`}
       {...rest}
     />
   );
