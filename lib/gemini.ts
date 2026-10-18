@@ -20,6 +20,7 @@ function ai(): GoogleGenAI | null {
 const FALLBACK_MODEL = "gemini-flash-latest";
 let activeModel = MODEL; // switches to the fallback if GEMINI_MODEL isn't a real model ID
 let lastError: string | null = null;
+let lastModelUsed = MODEL;
 
 async function askJson(contents: unknown, schema: object): Promise<unknown | null> {
   const g = ai();
@@ -41,14 +42,17 @@ async function askJson(contents: unknown, schema: object): Promise<unknown | nul
   try {
     let res;
     try {
+      lastModelUsed = activeModel;
       res = await call(activeModel);
     } catch (err) {
       const msg = (err as Error).message ?? "";
       const badModel = /not.?found|404|is not supported|unknown model|invalid model/i.test(msg);
-      if (!badModel || activeModel === FALLBACK_MODEL) throw err;
-      console.warn(`[gemini] model "${activeModel}" not available, using ${FALLBACK_MODEL}`);
-      activeModel = FALLBACK_MODEL;
-      res = await call(activeModel);
+      const busy = /503|UNAVAILABLE|high demand|overloaded|429|RESOURCE_EXHAUSTED/i.test(msg);
+      if ((!badModel && !busy) || activeModel === FALLBACK_MODEL) throw err;
+      console.warn(`[gemini] "${activeModel}" ${badModel ? "not available" : "busy"}, trying ${FALLBACK_MODEL}`);
+      if (badModel) activeModel = FALLBACK_MODEL; // permanent switch only for a wrong ID
+      res = await call(FALLBACK_MODEL);
+      lastModelUsed = FALLBACK_MODEL;
     }
     lastError = null;
     return res.text ? JSON.parse(res.text) : null;
@@ -69,7 +73,7 @@ export async function geminiSelfTest(): Promise<{ ok: boolean; model: string; sa
     properties: { hi: { type: "string" } },
     required: ["hi"],
   });
-  return { ok: out !== null, model: activeModel, sample: out, error: out === null ? lastError ?? "no GEMINI_API_KEY" : null };
+  return { ok: out !== null, model: lastModelUsed, sample: out, error: out === null ? lastError ?? "no GEMINI_API_KEY" : null };
 }
 
 // ---------- check-in parsing ----------
