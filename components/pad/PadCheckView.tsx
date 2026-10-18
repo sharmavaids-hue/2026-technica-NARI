@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { guessPad, savePad } from "@/lib/actions/pad";
 import { CLOT_POINTS, LEAK_POINTS, SOAK_POINTS, padPoints, scoreOf } from "@/lib/pbac";
-import type { Clot, PadCheckData, Score, Signal, Soak } from "@/lib/types";
+import type { Clot, PadCheckData, PadFailReason, Score, Signal, Soak } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { GetHelpContent } from "@/components/ui/GetHelp";
@@ -46,6 +46,7 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
   const [leaked, setLeaked] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [photoStatus, setPhotoStatus] = useState<PhotoStatus>("idle");
+  const [failReason, setFailReason] = useState<PadFailReason | null>(null);
   const [ai, setAi] = useState<{ soak: Soak | null; clot: Clot | null }>({ soak: null, clot: null });
   const [score, setScore] = useState<Score>(data.score);
   const [signals, setSignals] = useState<Signal[]>(data.signals);
@@ -69,6 +70,7 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
     setPhotoUrl(URL.createObjectURL(file));
     setSaved("");
     setAi({ soak: null, clot: null });
+    setFailReason(null);
     setPhotoStatus("looking");
     const run = ++guessRun.current;
 
@@ -94,7 +96,8 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
         if (guess.clot) setClot(guess.clot);
         setPhotoStatus("guessed");
       } else {
-        console.warn("[pad check] no guess from the server", guess, `(sent ${Math.round(jpeg.size / 1024)} KB jpeg)`);
+        console.warn(`[pad check] no guess from the server: ${guess.reason ?? "unknown"}`, `(sent ${Math.round(jpeg.size / 1024)} KB jpeg)`);
+        setFailReason(guess.reason);
         setPhotoStatus("no-guess");
       }
     } catch (err) {
@@ -147,7 +150,7 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start">
         <div className="flex flex-col gap-7 rounded-card border border-line bg-card p-4 sm:p-6">
-          <PhotoBox url={photoUrl} onPick={pickPhoto} onClear={clearPhoto} status={photoStatus} />
+          <PhotoBox url={photoUrl} onPick={pickPhoto} onClear={clearPhoto} status={photoStatus} reason={failReason} />
 
           <fieldset className="flex flex-col gap-4">
             <legend className="mb-4 font-serif text-[2rem] leading-none text-blue">how soaked is it?</legend>

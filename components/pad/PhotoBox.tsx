@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import type { PadFailReason } from "@/lib/types";
 import { CameraIcon } from "@/components/ui/icons";
 import { buttonClass } from "@/components/ui/Button";
 
@@ -14,16 +15,29 @@ const MESSAGES: Record<PhotoStatus, string> = {
   "bad-format": "that photo didn't open here. try a jpg or png, or pick it yourself below.",
 };
 
+/** Why the server had no guess, in plain words. Every one ends with what to do next. */
+const FAIL_MESSAGES: Record<PadFailReason, string> = {
+  busy: "nari's AI is busy right now. pick it yourself below.",
+  timeout: "nari's AI is busy right now. pick it yourself below.",
+  "not-a-pad": "nari couldn't spot a pad in that photo. pick it yourself below.",
+  blocked: "nari couldn't read that photo. pick it yourself below.",
+  "bad-photo": "that photo didn't come through. try another one, or pick it yourself below.",
+  "no-key": "photo guesses aren't switched on right now. pick it yourself below.",
+  error: "nari couldn't read that photo. pick it yourself below.",
+};
+
 type PhotoBoxProps = {
   /** object URL of the chosen photo, or null */
   url: string | null;
   onPick: (file: File) => void;
   onClear: () => void;
   status: PhotoStatus;
+  /** set with status "no-guess" when the server said why */
+  reason?: PadFailReason | null;
 };
 
 /** Optional pad photo: blurred until she chooses to look. Never stored. */
-export function PhotoBox({ url, onPick, onClear, status }: PhotoBoxProps) {
+export function PhotoBox({ url, onPick, onClear, status, reason }: PhotoBoxProps) {
   const id = useId();
   // remembers which photo was revealed, so a new photo always starts blurred again
   const [revealedUrl, setRevealedUrl] = useState<string | null>(null);
@@ -91,7 +105,7 @@ export function PhotoBox({ url, onPick, onClear, status }: PhotoBoxProps) {
               ))}
             </span>
           )}
-          {MESSAGES[status]}
+          {status === "no-guess" && reason ? FAIL_MESSAGES[reason] : MESSAGES[status]}
         </p>
         {revealed && (
           <button type="button" onClick={() => setRevealed(false)} className="min-h-11 font-bold text-blue underline underline-offset-4">

@@ -71,7 +71,7 @@ export function PadTestBench() {
         <table className="w-full min-w-[46rem] text-left text-sm tabular-nums">
           <thead className="bg-paper">
             <tr>
-              {["file", "type", "size", "sent", "expected", "soak", "clot", "ok", "time", "error"].map((h) => (
+              {["file", "type", "size", "sent", "expected", "soak", "clot", "ok", "reason", "time", "error"].map((h) => (
                 <th key={h} scope="col" className="px-3 py-2">
                   {h}
                 </th>
