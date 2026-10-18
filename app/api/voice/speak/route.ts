@@ -17,8 +17,8 @@ const TIMEOUT_MS = 15_000;
 const MODEL = process.env.ELEVENLABS_MODEL || "eleven_flash_v2_5";
 
 type Reason = "no-key" | "busy" | "too-long" | "error" | "unauthorized";
-const fail = (reason: Reason, status: number) =>
-  Response.json({ ok: false, reason }, { status, headers: { "Cache-Control": "no-store" } });
+const fail = (reason: Reason, status: number, detail?: string) =>
+  Response.json({ ok: false, reason, ...(detail ? { detail } : {}) }, { status, headers: { "Cache-Control": "no-store" } });
 
 // tiny in-memory LRU (Map keeps insertion order)
 const cache = new Map<string, ArrayBuffer>();
@@ -95,15 +95,21 @@ export async function POST(request: Request) {
   } catch (err) {
     const timedOut = (err as Error).name === "TimeoutError" || (err as Error).name === "AbortError";
     console.warn(`[voice] ${timedOut ? "timed out" : "request failed"}`);
-    return fail("busy", 503);
+    return fail("busy", 503, timedOut ? "timed out after 15s" : "could not reach elevenlabs");
   }
 
   if (!res.ok || !res.body) {
-    // log status only, never the text
-    console.warn(`[voice] elevenlabs status ${res.status}`);
-    if (res.status === 401 || res.status === 403) return fail("no-key", 503);
-    if (res.status === 429 || res.status >= 500) return fail("busy", res.status === 429 ? 429 : 503);
-    return fail("error", 503);
+    // ElevenLabs' own error (status + its message); never the text we sent
+    let why = "";
+    try {
+      const j = (await res.json()) as { detail?: { status?: string; message?: string } | string };
+      why = typeof j.detail === "string" ? j.detail : [j.detail?.status, j.detail?.message].filter(Boolean).join(": ");
+    } catch {}
+    const detail = `elevenlabs ${res.status}${why ? ` ${why.slice(0, 200)}` : ""}`;
+    console.warn(`[voice] ${detail}`);
+    if (res.status === 401 || res.status === 403) return fail("no-key", 503, detail);
+    if (res.status === 429 || res.status >= 500) return fail("busy", res.status === 429 ? 429 : 503, detail);
+    return fail("error", 503, detail);
   }
 
   if (text.length <= CACHE_MAX_CHARS) {
