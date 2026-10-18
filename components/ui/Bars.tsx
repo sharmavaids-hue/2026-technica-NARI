@@ -35,7 +35,7 @@ export function Bar({ kind, value, max = 5, compact = false }: BarProps) {
   const track = (
     <span className="relative block h-2.5 overflow-hidden rounded-pill bg-track" aria-hidden="true">
       <span
-        className={`absolute inset-y-0 left-0 rounded-pill ${BAR_COLORS[kind]} transition-[width] duration-500 ease-[var(--ease-out-soft)]`}
+        className={`grow-in absolute inset-y-0 left-0 rounded-pill ${BAR_COLORS[kind]} transition-[width] duration-500 ease-[var(--ease-out-soft)]`}
         style={{ width: `${pct}%` }}
       />
     </span>

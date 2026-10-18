@@ -23,7 +23,7 @@ const STATS = [
 
 export function HeavySection() {
   return (
-    <section aria-labelledby="heavy-title" className="bg-peach px-5 py-20 sm:px-10 sm:py-28">
+    <section aria-labelledby="heavy-title" className="wipe bg-peach px-5 py-20 sm:px-10 sm:py-28">
       <div className="mx-auto flex max-w-[1240px] flex-col gap-14 sm:gap-20">
         <div className="reveal grid gap-8 lg:grid-cols-2 lg:items-center">
           <h2 id="heavy-title" className="font-serif text-[clamp(3rem,7.5vw,6rem)] leading-[0.92] tracking-[-0.02em] text-blue">
@@ -130,7 +130,7 @@ export function TrustSection() {
 
 export function LandingFooter() {
   return (
-    <footer className="on-dark overflow-hidden bg-blue px-5 pb-8 pt-16 text-white sm:px-10 sm:pt-24">
+    <footer className="wipe on-dark overflow-hidden bg-blue px-5 pb-8 pt-16 text-white sm:px-10 sm:pt-24">
       <div className="mx-auto flex max-w-[1240px] flex-col gap-10">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <p className="font-serif text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.02]">

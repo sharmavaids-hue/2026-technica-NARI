@@ -191,7 +191,11 @@ export function Calendar({ days, today, selected, onSelect, nextPeriodLabel, gca
                     }`}
                   >
                     {day.isPeriod ? (
-                      <span aria-hidden="true" className="sphere flex size-10 items-center justify-center font-bold text-white sm:size-12" style={{ ["--s" as string]: "48px" }}>
+                      <span
+                        aria-hidden="true"
+                        className="sphere pop-in flex size-10 items-center justify-center font-bold text-white sm:size-12"
+                        style={{ ["--s" as string]: "48px", animationDelay: `${((day.periodDay ?? 1) - 1) * 90}ms` }}
+                      >
                         {n}
                       </span>
                     ) : day.isPredicted ? (

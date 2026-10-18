@@ -54,7 +54,7 @@ export function ScoreSphere({ size, fill, className = "" }: ScoreSphereProps) {
     >
       {/* liquid: height animates; the curved top is the meniscus */}
       <span
-        className="absolute inset-x-0 bottom-0 transition-[height] duration-[1200ms] ease-[var(--ease-out-soft)]"
+        className="fill-in absolute inset-x-0 bottom-0 transition-[height] duration-[1200ms] ease-[var(--ease-out-soft)]"
         style={{
           height: pct >= 100 ? "100%" : `${pct}%`,
           background: "radial-gradient(circle at 45% 20%, #cf5a67 0%, #b83e4b 50%, #8a2c38 100%)",

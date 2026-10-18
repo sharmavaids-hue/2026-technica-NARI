@@ -52,6 +52,7 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
   const [signals, setSignals] = useState<Signal[]>(data.signals);
   const [saved, setSaved] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
+  const [drop, setDrop] = useState<{ key: number; pts: number } | null>(null);
   const [saving, startSave] = useTransition();
   const guessRun = useRef(0);
   const urgentRef = useRef<HTMLDivElement>(null);
@@ -117,6 +118,7 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
     if (!soak) return;
     startSave(async () => {
       const res = await savePad({ soak, clot, leaked, aiSoak: ai.soak, aiClot: ai.clot });
+      setDrop({ key: Date.now(), pts: res.added });
       setScore(res.score);
       setSignals(res.signals);
       setSaved(`saved. +${pts(res.added)}. this period's score is now ${res.score.value}.`);
@@ -237,7 +239,19 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
 
         <div className="flex flex-col gap-5">
           <section aria-labelledby="score-title" className="flex flex-col items-center gap-2 rounded-card border border-line bg-card px-5 pb-6 pt-6 text-center">
-            <ScoreSphere size={176} fill={shownScore.fill} />
+            <div className="relative">
+              <ScoreSphere size={176} fill={shownScore.fill} />
+              {drop && (
+                <span
+                  key={drop.key}
+                  aria-hidden="true"
+                  onAnimationEnd={() => setDrop(null)}
+                  className="chip-drop absolute left-1/2 top-0 rounded-pill bg-red px-3 py-1 font-bold text-white shadow-md"
+                >
+                  +{drop.pts}
+                </span>
+              )}
+            </div>
             <h2 id="score-title" className="mt-3 flex items-center gap-3 text-muted">
               this period&apos;s score
               <ScoreExplainer score={shownScore} className="-my-3 text-sm" />

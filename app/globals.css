@@ -198,6 +198,42 @@ dialog.sheet[open] {
   }
 }
 
+/* ---------- small explanatory motion (all off with reduced motion via the rule below) ---------- */
+@keyframes fill-in {
+  from { height: 0; }
+}
+@keyframes grow-in {
+  from { width: 0; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.4); }
+}
+@keyframes chip-drop {
+  0% { opacity: 0; transform: translate(-50%, -2.5rem) scale(0.9); }
+  20% { opacity: 1; transform: translate(-50%, -2.5rem) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, 3.5rem) scale(0.75); }
+  100% { opacity: 0; transform: translate(-50%, 4.5rem) scale(0.6); }
+}
+.fill-in { animation: fill-in 1.2s var(--ease-out-soft) backwards; }
+.grow-in { animation: grow-in 700ms var(--ease-out-soft) backwards; }
+.pop-in { animation: pop-in 420ms var(--ease-out-soft) both; }
+.chip-drop { animation: chip-drop 900ms var(--ease-out-soft) both; }
+
+/* colored sections sweep in as a block of their own color */
+@keyframes wipe {
+  from { clip-path: inset(100% 0 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .wipe {
+      animation: wipe linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
+
 /* ---------- landing: "how your score adds up" scroll story ---------- */
 /* finished state by default: full pad, sphere at 26, every step lit */
 @property --story-n {
