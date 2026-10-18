@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { guessPad, savePad } from "@/lib/actions/pad";
 import { CLOT_POINTS, LEAK_POINTS, SOAK_POINTS, padPoints, scoreOf } from "@/lib/pbac";
-import type { Clot, PadCheckData, PadFailReason, PadLog, Score, Signal, Soak } from "@/lib/types";
+import type { Clot, PadCheckData, PadColor, PadFailReason, PadLog, Score, Signal, Soak } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { GetHelpContent } from "@/components/ui/GetHelp";
@@ -15,6 +15,9 @@ import { CheckIcon } from "@/components/ui/icons";
 import { PadList } from "@/components/ui/PadRecord";
 import { ScoreExplainer } from "@/components/ui/ScoreExplainer";
 import { scoreProgress } from "@/components/ui/scoreProgress";
+import { COLOR_WORDS, PAD_COLORS } from "@/components/padColorMeaning";
+import { ColorSwatch } from "@/components/ui/ColorSwatch";
+import { ColorMeaning } from "./ColorMeaning";
 import { PhotoBox, type PhotoStatus } from "./PhotoBox";
 import { resizePhoto } from "./resize";
 import { useCountUp } from "./useCountUp";
@@ -41,6 +44,8 @@ function GuessTag() {
   );
 }
 
+const NOTE_MAX = 140;
+
 export function PadCheckView({ data }: { data: PadCheckData }) {
   const [soak, setSoak] = useState<Soak | null>(null);
   const [clot, setClot] = useState<Clot>("none");
@@ -48,7 +53,9 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [photoStatus, setPhotoStatus] = useState<PhotoStatus>("idle");
   const [failReason, setFailReason] = useState<PadFailReason | null>(null);
-  const [ai, setAi] = useState<{ soak: Soak | null; clot: Clot | null }>({ soak: null, clot: null });
+  const [ai, setAi] = useState<{ soak: Soak | null; clot: Clot | null; color: PadColor | null }>({ soak: null, clot: null, color: null });
+  const [color, setColor] = useState<PadColor | null>(null);
+  const [note, setNote] = useState("");
   const [score, setScore] = useState<Score>(data.score);
   const [signals, setSignals] = useState<Signal[]>(data.signals);
   const [todayPads, setTodayPads] = useState<PadLog[]>(data.todayPads);
@@ -72,7 +79,7 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
   async function pickPhoto(file: File) {
     setPhotoUrl(URL.createObjectURL(file));
     setSaved("");
-    setAi({ soak: null, clot: null });
+    setAi({ soak: null, clot: null, color: null });
     setFailReason(null);
     setPhotoStatus("looking");
     const run = ++guessRun.current;
@@ -94,9 +101,10 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
       const guess = await guessPad(form);
       if (run !== guessRun.current) return; // a newer photo replaced this one
       if (guess.ok && guess.soak) {
-        setAi({ soak: guess.soak, clot: guess.clot });
+        setAi({ soak: guess.soak, clot: guess.clot, color: guess.color });
         setSoak(guess.soak);
         if (guess.clot) setClot(guess.clot);
+        if (guess.color && guess.color !== "unsure") setColor(guess.color);
         setPhotoStatus("guessed");
       } else {
         console.warn(`[pad check] no guess from the server: ${guess.reason ?? "unknown"}`, `(sent ${Math.round(jpeg.size / 1024)} KB jpeg)`);
@@ -113,13 +121,13 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
     guessRun.current++;
     setPhotoUrl(null);
     setPhotoStatus("idle");
-    setAi({ soak: null, clot: null });
+    setAi({ soak: null, clot: null, color: null });
   }
 
   function save() {
     if (!soak) return;
     startSave(async () => {
-      const res = await savePad({ soak, clot, leaked, aiSoak: ai.soak, aiClot: ai.clot });
+      const res = await savePad({ soak, clot, leaked, aiSoak: ai.soak, aiClot: ai.clot, color, aiColor: ai.color, note: note.trim() || null });
       setDrop({ key: Date.now(), pts: res.added });
       setScore(res.score);
       setSignals(res.signals);
@@ -128,6 +136,8 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
       setSoak(null);
       setClot("none");
       setLeaked(false);
+      setColor(null);
+      setNote("");
       clearPhoto();
       if (res.signals.some((s) => s.state === "urgent")) {
         requestAnimationFrame(() => urgentRef.current?.scrollIntoView({ block: "start" }));
@@ -227,6 +237,42 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
             </div>
           </fieldset>
 
+          <fieldset>
+            <legend className="mb-1 font-serif text-[2rem] leading-none text-blue">what color is it?</legend>
+            <p className="mb-4 text-[0.95rem] text-muted">
+              {photoStatus === "guessed" && (!ai.color || ai.color === "unsure")
+                ? "nari couldn't tell from the photo. pick the closest, or \"not sure\"."
+                : "optional. cameras and lighting change color, so pick the closest."}
+            </p>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
+              {PAD_COLORS.map((c) => {
+                const checked = color === c;
+                return (
+                  <label
+                    key={c}
+                    className={`relative flex min-h-14 cursor-pointer items-center gap-3 rounded-[16px] border bg-card px-4 font-bold has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-blue ${
+                      checked ? "border-[2.5px] border-red" : "border-line hover:border-ink"
+                    }`}
+                  >
+                    {ai.color === c && c !== "unsure" && <GuessTag />}
+                    <input
+                      type="radio"
+                      name="color"
+                      value={c}
+                      checked={checked}
+                      onChange={() => setColor(c)}
+                      className="sr-only"
+                    />
+                    <ColorSwatch color={c} size={26} />
+                    {COLOR_WORDS[c]}
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {color && <ColorMeaning color={color} clot={clot} score={shownScore} />}
+
           <label className="flex min-h-11 cursor-pointer items-center gap-3 self-start">
             <input
               type="checkbox"
@@ -238,6 +284,25 @@ export function PadCheckView({ data }: { data: PadCheckData }) {
               it leaked or flooded <span className="text-muted">· {pts(LEAK_POINTS)}</span>
             </span>
           </label>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pad-note" className="font-bold">
+              anything else? <span className="font-normal text-muted">(optional)</span>
+            </label>
+            <textarea
+              id="pad-note"
+              rows={2}
+              value={note}
+              maxLength={NOTE_MAX}
+              onChange={(e) => setNote(e.target.value)}
+              aria-describedby="pad-note-count"
+              placeholder="cramps got worse after lunch…"
+              className="min-h-12 w-full resize-none rounded-[14px] border-[1.5px] border-line bg-paper px-4 py-2.5"
+            />
+            <span id="pad-note-count" aria-live="polite" className="self-end text-sm tabular-nums text-muted">
+              {note.length}/{NOTE_MAX}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-col gap-5">

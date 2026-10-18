@@ -10,8 +10,14 @@ import { StatusPill } from "@/components/ui/StatusPill";
 import { PrintIcon } from "@/components/ui/icons";
 import { ScoreExplainer } from "@/components/ui/ScoreExplainer";
 import { PadList } from "@/components/ui/PadRecord";
+import { COLOR_WORDS } from "@/components/padColorMeaning";
 
 const cell = (v: number | null) => (v === null ? "–" : `${v}/5`);
+/** "bright red, dark red" (the day's colors, in the order she logged them) */
+function colors(pads: PadLog[]) {
+  const seen = [...new Set(pads.filter((p) => p.color).map((p) => COLOR_WORDS[p.color!]))];
+  return seen.join(", ") || (pads.length ? "not recorded" : "–");
+}
 /** "1 small, 1 large" */
 function clots(pads: PadLog[]) {
   const small = pads.filter((p) => p.clot === "small").length;
@@ -159,12 +165,12 @@ export function DoctorView({ data }: { data: DoctorData }) {
               <h3 id="table-title" className="font-bold text-lg">
                 daily check-ins
               </h3>
-              <div className="overflow-x-auto rounded-inner border border-line">
-                <table className="w-full min-w-[38rem] border-collapse text-left tabular-nums">
+              <div className="overflow-x-auto rounded-inner border border-line print:overflow-visible">
+                <table className="w-full min-w-[44rem] border-collapse text-left tabular-nums print:min-w-0 print:text-[0.8rem]">
                   <caption className="sr-only">daily check-ins for this period, each rated out of 5</caption>
                   <thead className="bg-paper">
                     <tr>
-                      {["day", "date", "pads", "clots", "points", "bleeding", "energy", "discomfort", "mood"].map((h) => (
+                      {["day", "date", "pads", "clots", "color", "points", "bleeding", "energy", "discomfort", "mood"].map((h) => (
                         <th key={h} scope="col" className="px-3 py-2.5 text-sm font-bold">
                           {h}
                         </th>
@@ -177,9 +183,10 @@ export function DoctorView({ data }: { data: DoctorData }) {
                         <th scope="row" className="px-3 py-2.5 font-bold">
                           {d.periodDay ?? "–"}
                         </th>
-                        <td className="px-3 py-2.5">{formatMonthDay(d.date)}</td>
+                        <td className="whitespace-nowrap px-3 py-2.5">{formatMonthDay(d.date)}</td>
                         <td className="px-3 py-2.5">{d.pads.length}</td>
                         <td className="px-3 py-2.5">{clots(d.pads)}</td>
+                        <td className="px-3 py-2.5">{colors(d.pads)}</td>
                         <td className="px-3 py-2.5">{d.padPoints}</td>
                         <td className="px-3 py-2.5">{cell(d.bleeding)}</td>
                         <td className="px-3 py-2.5">{cell(d.energy)}</td>
