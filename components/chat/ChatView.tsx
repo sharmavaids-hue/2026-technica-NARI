@@ -12,6 +12,8 @@ import { SignalCard } from "@/components/ui/SignalCard";
 import { Sphere } from "@/components/ui/Sphere";
 import { ArrowUpIcon, PlusIcon } from "@/components/ui/icons";
 import { BarsCard } from "./BarsCard";
+import { ListenButton } from "./ListenButton";
+import { MicButton } from "./MicButton";
 
 // Clock time for a message timestamp. The *day* comes from appDate, so the demo skip works.
 const timeFmt = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: APP_TZ });
@@ -31,9 +33,9 @@ function needsStamp(m: ChatMessage, prev: ChatMessage | undefined) {
   return Date.parse(m.createdAt) - Date.parse(prev.createdAt) > 60 * 60 * 1000;
 }
 
-function NariBubble({ children }: { children: ReactNode }) {
+function NariBubble({ children, inGroup = false }: { children: ReactNode; inGroup?: boolean }) {
   return (
-    <div className="max-w-[min(32rem,85%)] self-start whitespace-pre-line rounded-[22px] rounded-bl-[8px] bg-[#e6dfd3] px-4 py-2.5 text-ink [overflow-wrap:anywhere]">
+    <div className={`${inGroup ? "max-w-full" : "max-w-[min(32rem,85%)]"} self-start whitespace-pre-line rounded-[22px] rounded-bl-[8px] bg-[#e6dfd3] px-4 py-2.5 text-ink [overflow-wrap:anywhere]`}>
       {children}
     </div>
   );
@@ -125,7 +127,12 @@ export function ChatView({ data }: { data: ChatData }) {
     if (card?.type === "signal") {
       return (
         <div className="flex w-full max-w-[min(32rem,90%)] flex-col gap-2 self-start">
-          {m.body && <NariBubble>{m.body}</NariBubble>}
+          {m.body && (
+            <>
+              <NariBubble>{m.body}</NariBubble>
+              <ListenButton id={m.id} text={m.body} />
+            </>
+          )}
           <SignalCard signal={card.signal} level={2} />
         </div>
       );
@@ -138,7 +145,12 @@ export function ChatView({ data }: { data: ChatData }) {
         </section>
       );
     }
-    return <NariBubble>{m.body}</NariBubble>;
+    return (
+      <div className="flex max-w-[min(32rem,85%)] flex-col self-start">
+        <NariBubble inGroup>{m.body}</NariBubble>
+        <ListenButton id={m.id} text={m.body} />
+      </div>
+    );
   }
 
   return (
@@ -185,7 +197,7 @@ export function ChatView({ data }: { data: ChatData }) {
               </div>
             </>
           )}
-          <div ref={endRef} />
+          <div ref={endRef} className="scroll-mb-[calc(var(--composer-h,9rem)+4.75rem)] lg:scroll-mb-4" />
         </div>
       </div>
 
@@ -239,6 +251,13 @@ export function ChatView({ data }: { data: ChatData }) {
               enterKeyHint="enter"
               maxLength={1000}
               className="block max-h-[168px] min-h-12 min-w-0 flex-1 resize-none overflow-y-auto rounded-[24px] border-[1.5px] border-line bg-card px-5 py-[11px] text-base leading-6"
+            />
+            <MicButton
+              base={draft}
+              onText={(t) => {
+                setDraft(t);
+                requestAnimationFrame(autosize);
+              }}
             />
             <button
               type="submit"
